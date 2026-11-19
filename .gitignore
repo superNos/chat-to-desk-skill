@@ -1,0 +1,16 @@
+# Python 缓存
+__pycache__/
+*.py[cod]
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器临时文件
+*.swp
+*.swo
+*~
+
+# 用户自己的工作记录不要提交到这里
+output/

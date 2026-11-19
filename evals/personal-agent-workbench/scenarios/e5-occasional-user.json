@@ -1,0 +1,83 @@
+{
+  "id": "E5",
+  "persona": "退休的钱先生，偶尔用 Agent 问生活问题",
+  "role_type": "非开发",
+  "authorization": {
+    "sources": "某 Agent 平台最近 2 个月对话",
+    "excluded": [
+      "涉及看病的对话"
+    ],
+    "save_findings": "不保存",
+    "save_rules": "未授权",
+    "handoff": "未授权"
+  },
+  "platform_capabilities": {
+    "读取历史": "已核实（列出对话标题成功）",
+    "发起工作": "待核实",
+    "继续同一工作": "待核实",
+    "取回结果": "待核实"
+  },
+  "history": [
+    {
+      "id": "H1",
+      "date": "2026-08-03",
+      "title": "月季叶子发黄",
+      "summary": "一次性问题"
+    },
+    {
+      "id": "H2",
+      "date": "2026-08-10",
+      "title": "手机字体调大",
+      "summary": "一次性问题"
+    },
+    {
+      "id": "H3",
+      "date": "2026-08-21",
+      "title": "写一首生日诗",
+      "summary": "一次性问题"
+    },
+    {
+      "id": "H4",
+      "date": "2026-09-02",
+      "title": "火车票退改规则",
+      "summary": "一次性问题"
+    },
+    {
+      "id": "H5",
+      "date": "2026-09-15",
+      "title": "红烧肉做法",
+      "summary": "一次性问题"
+    }
+  ],
+  "user_calibration": [
+    {
+      "refers": [
+        "H1",
+        "H2",
+        "H3",
+        "H4",
+        "H5"
+      ],
+      "response": "确认",
+      "note": "都是想到就问，不需要接着做"
+    }
+  ],
+  "expected": {
+    "conclusion": "暂不需要复杂工作台",
+    "elements": [],
+    "must_not_include": [
+      "工作台页面",
+      "待办",
+      "看板",
+      "收藏夹",
+      "提醒"
+    ],
+    "confirm_each_time": [],
+    "privacy_notes": [
+      "用户选择不保存，分析结果只在当前对话展示"
+    ],
+    "reevaluate_when": "开始需要隔几天接着做同一件事，或同一类问题反复要重新交代背景",
+    "authorization_notes": []
+  },
+  "usage_probes": []
+}

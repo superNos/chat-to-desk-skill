@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>它是怎么工作的</title>
+<!-- README 流程图的源文件。修改后用浏览器无头模式截图为 docs/images/how-it-works.png。 -->
+<style>
+  :root { --ink:#1f2933; --muted:#52606d; --line:#9aa5b1; --card:#ffffff; --bg:#f5f3ee; --you:#b44d12; --you-bg:#fdf0e6; --agent:#1f5f8b; --agent-bg:#e8f1f8; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:"PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei",sans-serif; }
+  .page { width:1200px; padding:44px 48px 40px; }
+  h1 { margin:0 0 6px; font-size:30px; font-weight:600; letter-spacing:1px; }
+  .sub { margin:0 0 30px; font-size:17px; color:var(--muted); }
+  .row { display:grid; grid-template-columns:repeat(3, 1fr); gap:56px; position:relative; }
+  .row + .row { margin-top:64px; }
+  .card { background:var(--card); border:1.5px solid #d9d4c7; border-radius:14px; padding:18px 20px 20px; min-height:198px; position:relative; }
+  .num { display:inline-flex; width:30px; height:30px; border-radius:50%; background:var(--ink); color:#fff; font-size:16px; align-items:center; justify-content:center; margin-right:10px; font-weight:600; }
+  .title { display:flex; align-items:center; font-size:21px; font-weight:600; margin-bottom:10px; }
+  .who { font-size:13px; padding:2px 8px; border-radius:999px; margin-left:auto; font-weight:500; }
+  .who.you { color:var(--you); background:var(--you-bg); }
+  .who.agent { color:var(--agent); background:var(--agent-bg); }
+  .card p { margin:0; font-size:16px; line-height:1.65; color:#323f4b; }
+  .gate { margin-top:12px; border:1.5px dashed var(--you); background:var(--you-bg); color:var(--you); border-radius:10px; padding:7px 10px; font-size:14.5px; line-height:1.5; }
+  .gate b { font-weight:600; }
+  svg.arrows { position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+  .footer { margin-top:34px; display:flex; gap:18px; }
+  .band { flex:1; border-radius:12px; padding:14px 18px; font-size:16px; line-height:1.6; }
+  .band.you { background:#fff; border:2px solid var(--you); }
+  .band.you b { color:var(--you); }
+  .band.no { background:#fff; border:1.5px solid #d9d4c7; }
+  .legend { margin-top:14px; font-size:14px; color:var(--muted); }
+  .dash { display:inline-block; width:26px; height:14px; border:1.5px dashed var(--you); background:var(--you-bg); border-radius:4px; vertical-align:-2px; margin-right:6px; }
+</style>
+</head>
+<body>
+<div class="page" id="page">
+  <h1>它是怎么工作的</h1>
+  <p class="sub">你自己的 Agent 按这六步和你一起做。每一步结束都先给你看，你同意了才往下走；随时可以停下或退回上一步。</p>
+
+  <div class="row" id="row1">
+    <div class="card" id="c1">
+      <div class="title"><span class="num">1</span>确认范围<span class="who you">你决定</span></div>
+      <p>看哪些对话、看多久以内的、跳过哪些主题，整理出的内容存不存、存在哪里。</p>
+      <div class="gate"><b>授权①</b> 同意分析历史，才开始读</div>
+    </div>
+    <div class="card" id="c2">
+      <div class="title"><span class="num">2</span>理解工作<span class="who agent">Agent 整理</span></div>
+      <p>只在你同意的范围里读。找出你反复交代的背景、隔天还要接着做的事、事后找不回的结果，每一条都写明出自哪段对话。</p>
+    </div>
+    <div class="card" id="c3">
+      <div class="title"><span class="num">3</span>和你校准<span class="who you">你判断</span></div>
+      <p>Agent 用你的话讲出发现，你逐条说对、不对，或只在某些情况下成立，再补上对话里看不到的事。</p>
+      <div class="gate"><b>授权②</b> 想长期记住你的做法（如固定格式）时，单独问你</div>
+    </div>
+  </div>
+
+  <div class="row" id="row2">
+    <div class="card" id="c6">
+      <div class="title"><span class="num">6</span>持续调整<span class="who you">你确认</span></div>
+      <p>按实际使用增加、修改或去掉内容。Agent 记住的每条规则，你都可以保留、修改、限定范围或删除。</p>
+    </div>
+    <div class="card" id="c5">
+      <div class="title"><span class="num">5</span>小范围试用<span class="who you">你选范围</span></div>
+      <p>先只做你最在意的一到三件事，用最轻的形式：一段开工时带上的说明、一份本机文档，确有需要才做本机小网页。</p>
+      <div class="gate"><b>授权③</b> 要把材料交给 Agent 或别的对话处理时，单独问你</div>
+    </div>
+    <div class="card" id="c4">
+      <div class="title"><span class="num">4</span>设计工作台<span class="who agent">Agent 起草</span></div>
+      <p>只用你确认过的内容。草案里每个输入框、记录、状态都写明来自哪件事；结论也可以是“现在不需要”。</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="band you"><b>每次都由你本人确认：</b>发送消息或邮件、提交、付款、发布、删除。以前确认过、Agent 记住了你的习惯，都不能代替这一次的确认。</div>
+    <div class="band no"><b>平台做不到的事，不假装做到：</b>没核实过能自动发起或取回时，Agent 给你一段可复制的文字，并标明“需手动完成”。</div>
+  </div>
+  <p class="legend"><span class="dash"></span>虚线框是需要你单独授权的地方；②和③到需要时才问。三项授权互不代替。</p>
+</div>
+<script>
+  // 用 SVG 画卡片之间的箭头：第一行从左到右，转到第二行后从右到左，6 再回到 4 表示循环。
+  const page = document.getElementById('page');
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'arrows');
+  svg.innerHTML = '<defs><marker id="m" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#52606d"/></marker></defs>';
+  page.style.position = 'relative';
+  page.appendChild(svg);
+  const box = id => { const r = document.getElementById(id).getBoundingClientRect(), p = page.getBoundingClientRect(); return { l:r.left-p.left, r:r.right-p.left, t:r.top-p.top, b:r.bottom-p.top, cx:(r.left+r.right)/2-p.left, cy:(r.top+r.bottom)/2-p.top }; };
+  const path = (d, dashed) => { const e = document.createElementNS(svgNS, 'path'); e.setAttribute('d', d); e.setAttribute('fill', 'none'); e.setAttribute('stroke', '#52606d'); e.setAttribute('stroke-width', '2.2'); if (dashed) e.setAttribute('stroke-dasharray', '6 5'); e.setAttribute('marker-end', 'url(#m)'); svg.appendChild(e); };
+  const label = (x, y, text) => { const t = document.createElementNS(svgNS, 'text'); t.setAttribute('x', x); t.setAttribute('y', y); t.setAttribute('text-anchor', 'middle'); t.setAttribute('font-size', '14'); t.setAttribute('fill', '#52606d'); t.textContent = text; svg.appendChild(t); };
+  const [c1,c2,c3,c4,c5,c6] = ['c1','c2','c3','c4','c5','c6'].map(box);
+  path(`M${c1.r+4},${c1.cy} L${c2.l-6},${c2.cy}`);
+  path(`M${c2.r+4},${c2.cy} L${c3.l-6},${c3.cy}`);
+  path(`M${c3.cx},${c3.b+4} L${c4.cx},${c4.t-6}`);
+  path(`M${c4.l-4},${c4.cy} L${c5.r+6},${c5.cy}`);
+  path(`M${c5.l-4},${c5.cy} L${c6.r+6},${c6.cy}`);
+  // 6 → 4 的循环箭头，从第二行下方绕过去
+  const y = c6.b + 22;
+  path(`M${c6.cx},${c6.b+4} L${c6.cx},${y} L${c4.cx},${y} L${c4.cx},${c4.b+6}`, true);
+  label((c6.cx + c4.cx) / 2, y + 20, '用一段时间后，按实际使用再改设计');
+  document.querySelector('.footer').style.marginTop = '62px';
+</script>
+</body>
+</html>

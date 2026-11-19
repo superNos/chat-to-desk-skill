@@ -1,0 +1,218 @@
+{
+  "id": "E1",
+  "persona": "小学四年级班主任赵老师，用 Agent 处理家长消息和班级通知",
+  "role_type": "非开发",
+  "authorization": {
+    "sources": "某 Agent 平台最近 4 周对话",
+    "excluded": [],
+    "save_findings": "本机，用户指定文件夹",
+    "save_rules": "待问",
+    "handoff": "仅家长消息摘要可交给 Agent，学生全名与电话不可交出"
+  },
+  "platform_capabilities": {
+    "读取历史": "已核实（用户同意后先列出对话标题成功）",
+    "发起工作": "待核实",
+    "继续同一工作": "待核实",
+    "取回结果": "待核实"
+  },
+  "history": [
+    {
+      "id": "H1",
+      "date": "2026-03-02",
+      "title": "家长问作业量",
+      "summary": "粘贴一位家长的长消息，请 Agent 起草礼貌回复；老师自己改后发出"
+    },
+    {
+      "id": "H2",
+      "date": "2026-03-04",
+      "title": "家长请假",
+      "summary": "请 Agent 起草回复；老师说‘我自己发，不要帮我发’"
+    },
+    {
+      "id": "H3",
+      "date": "2026-03-06",
+      "title": "周五班级通知",
+      "summary": "重新说明通知格式：先安全提醒，再作业，再下周活动"
+    },
+    {
+      "id": "H4",
+      "date": "2026-03-09",
+      "title": "家长投诉座位",
+      "summary": "起草回复，要求语气温和但立场清楚"
+    },
+    {
+      "id": "H5",
+      "date": "2026-03-11",
+      "title": "找之前的回复",
+      "summary": "问‘上周给 S07 家长怎么回的’，Agent 找不到，老师翻旧对话"
+    },
+    {
+      "id": "H6",
+      "date": "2026-03-12",
+      "title": "家长问考试",
+      "summary": "起草回复，老师本人发送"
+    },
+    {
+      "id": "H7",
+      "date": "2026-03-13",
+      "title": "周五班级通知",
+      "summary": "再次说明同样的通知格式"
+    },
+    {
+      "id": "H8",
+      "date": "2026-03-18",
+      "title": "找之前的回复",
+      "summary": "问‘S03 家长上次说过什么’，又一次翻旧对话"
+    },
+    {
+      "id": "H9",
+      "date": "2026-03-20",
+      "title": "周五班级通知",
+      "summary": "第三次说明通知格式"
+    },
+    {
+      "id": "H10",
+      "date": "2026-03-22",
+      "title": "周末去哪玩",
+      "summary": "个人旅行问题"
+    }
+  ],
+  "user_calibration": [
+    {
+      "refers": [
+        "H1",
+        "H2",
+        "H4",
+        "H6"
+      ],
+      "response": "确认",
+      "note": "家长消息每周十几条，常常同时有好几条没回"
+    },
+    {
+      "refers": [
+        "H3",
+        "H7",
+        "H9"
+      ],
+      "response": "限定范围",
+      "note": "只在学期中每周五"
+    },
+    {
+      "refers": [
+        "H5",
+        "H8"
+      ],
+      "response": "确认",
+      "note": "按学生找以前的沟通最麻烦"
+    },
+    {
+      "refers": [
+        "H10"
+      ],
+      "response": "否定",
+      "note": "与工作无关"
+    }
+  ],
+  "expected": {
+    "conclusion": "需要工作台",
+    "elements": [
+      {
+        "name": "粘贴家长消息、生成回复草稿的入口",
+        "kind": "输入",
+        "evidence": [
+          "H1",
+          "H2",
+          "H4",
+          "H6"
+        ]
+      },
+      {
+        "name": "尚未回复的家长消息一览",
+        "kind": "对象",
+        "evidence": [
+          "H1",
+          "H4",
+          "H6"
+        ]
+      },
+      {
+        "name": "按学生代号查以前的家长沟通",
+        "kind": "结果查看",
+        "evidence": [
+          "H5",
+          "H8"
+        ]
+      },
+      {
+        "name": "周五班级通知格式说明",
+        "kind": "背景资料",
+        "evidence": [
+          "H3",
+          "H7",
+          "H9"
+        ]
+      },
+      {
+        "name": "回复由老师本人确认并发送",
+        "kind": "确认",
+        "evidence": [
+          "H2",
+          "H6"
+        ]
+      }
+    ],
+    "must_not_include": [
+      "任务编号",
+      "开发状态",
+      "提交确认",
+      "看板",
+      "统计图",
+      "周报",
+      "仪表盘"
+    ],
+    "confirm_each_time": [
+      "把回复发给家长"
+    ],
+    "privacy_notes": [
+      "学生只用代号，不保存姓名和家长电话"
+    ],
+    "authorization_notes": [
+      "“周五班级通知格式说明”要长期保存，需先问保存规则；未同意前只在当前对话给出，由老师自己留存"
+    ],
+    "conclusion_reason": "家长消息常常同时有好几条没回，需要在一处看到哪些还没回"
+  },
+  "usage_probes": [
+    {
+      "input": "新家长消息：孩子最近不想上学",
+      "destination": "新工作",
+      "expected_status": "需手动完成",
+      "requires_confirmation": false,
+      "note": "发起能力待核实时生成交接内容；交接内容只含去掉学生全名和家长电话的消息摘要",
+      "kind": "用户输入"
+    },
+    {
+      "input": "在 S07 的回复草稿旁写：语气再温和一点",
+      "destination": "修改结果",
+      "expected_status": "需手动完成",
+      "requires_confirmation": false,
+      "note": "继续能力待核实：交接内容写明回到原回复所在对话粘贴；用户确认粘贴后才可改为已发送",
+      "kind": "用户输入"
+    },
+    {
+      "input": "把这条回复发给家长",
+      "destination": "继续某件事",
+      "expected_status": "待确认",
+      "requires_confirmation": true,
+      "note": "发送由老师本人完成",
+      "kind": "用户输入"
+    },
+    {
+      "input": "通用输入：把上次那个改一下",
+      "destination": "需先询问",
+      "expected_status": "待确认",
+      "requires_confirmation": false,
+      "note": "存在多个上次结果，先列候选",
+      "kind": "用户输入"
+    }
+  ]
+}

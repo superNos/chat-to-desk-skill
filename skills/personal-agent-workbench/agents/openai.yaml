@@ -1,0 +1,4 @@
+interface:
+  display_name: "个人 Agent 工作台"
+  short_description: "按你的历史工作和确认结果，共同设计并调整专属 Agent 工作台"
+  default_prompt: "使用 $personal-agent-workbench 在我授权的范围内了解我平时用 Agent 做的工作，再和我一起决定是否需要、以及需要什么样的工作台。"

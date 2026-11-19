@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>同一个技能，两个不同的工作台</title>
+<!-- README 对比图的源文件。内容取自 evals/personal-agent-workbench/demos/ 的两个演示。修改后截图为 docs/images/comparison.png。 -->
+<style>
+  :root { --ink:#1f2933; --muted:#52606d; --bg:#f5f3ee; --a:#2f6b4f; --a-bg:#e9f3ed; --b:#5a4a9c; --b-bg:#efecf8; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:"PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei",sans-serif; }
+  .page { width:1200px; padding:44px 48px 36px; }
+  h1 { margin:0 0 6px; font-size:30px; font-weight:600; letter-spacing:1px; }
+  .sub { margin:0 0 26px; font-size:17px; color:var(--muted); line-height:1.6; }
+  table { width:100%; border-collapse:separate; border-spacing:0 10px; table-layout:fixed; }
+  col.k { width:132px; }
+  th { font-size:21px; font-weight:600; text-align:left; padding:14px 18px; border-radius:12px 12px 0 0; }
+  th small { display:block; font-size:14.5px; font-weight:400; margin-top:4px; }
+  th.a { background:var(--a); color:#fff; }
+  th.b { background:var(--b); color:#fff; }
+  td { background:#fff; font-size:16px; line-height:1.62; padding:13px 18px; vertical-align:top; color:#323f4b; }
+  td.k { background:transparent; font-weight:600; color:var(--ink); padding-left:0; font-size:16.5px; }
+  td.a { border-left:5px solid var(--a); }
+  td.b { border-left:5px solid var(--b); }
+  .tag { display:inline-block; font-size:14px; padding:1px 8px; border-radius:6px; margin:2px 4px 2px 0; white-space:nowrap; }
+  td.a .tag { background:var(--a-bg); color:var(--a); }
+  td.b .tag { background:var(--b-bg); color:var(--b); }
+  .arrow { color:var(--muted); margin:0 2px; }
+  .note { margin-top:16px; font-size:14.5px; color:var(--muted); line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>同一个技能，两个不同的工作台</h1>
+  <p class="sub">两位虚构用户都不是开发者。两个互不相通的新会话各自按同一份技能，读这位用户的历史、和用户校准，再提出工作台。</p>
+  <table>
+    <colgroup><col class="k"><col><col></colgroup>
+    <tr><td class="k"></td><th class="a">小学班主任<small>家长消息很多，常常几条同时没回；想按学生找以前怎么回的</small></th><th class="b">业务分析师<small>同事随时来问数据；指标口径反复讲、怕用错；同一位同事隔月再问</small></th></tr>
+    <tr><td class="k">得到什么</td>
+      <td class="a">两份本机文档：《家长沟通记录》《家长回复交接》；另有一段周五通知开场说明，只给在对话里</td>
+      <td class="b">一份本机文档：《同事数据问题记录》</td></tr>
+    <tr><td class="k">围绕什么</td>
+      <td class="a">一条条家长消息。顶部是“还没回的”清单，下面按学生编号分节</td>
+      <td class="b">一个个同事问题。开头写着已确认的口径“活跃会员＝近 30 天有消费”，下面每个问题一行</td></tr>
+    <tr><td class="k">输入去哪</td>
+      <td class="a">新消息<span class="arrow">→</span>开新对话<br>家长补充情况<span class="arrow">→</span>回原对话<br>改稿<span class="arrow">→</span>原对话里指定的那一版</td>
+      <td class="b">新问题<span class="arrow">→</span>开新查询对话<br>加条件<span class="arrow">→</span>回这一行的原对话<br>改结果<span class="arrow">→</span>原对话里选定的那次回复</td></tr>
+    <tr><td class="k">状态</td>
+      <td class="a">一条消息一列进展：<br><span class="tag">还没回</span><span class="tag">等我粘贴（需手动完成）</span><span class="tag">已贴到对话</span><span class="tag">草稿已拿回，等我改发</span><span class="tag">我已发出</span><br>拿不到进展时注明“最新情况未知”</td>
+      <td class="b">两列分开记：<br>查询 <span class="tag">需手动完成</span><span class="tag">已发送</span><span class="tag">已开始</span><span class="tag">已完成</span><span class="tag">失败</span><span class="tag">最新情况未知</span><br>答复 <span class="tag">未答复</span><span class="tag">答复已备好，待你转发</span><span class="tag">已转发</span></td></tr>
+    <tr><td class="k">结果回到哪</td>
+      <td class="a">同一位学生、同一条消息旁，分别记“草稿”要点和“实发”要点</td>
+      <td class="b">同一行，只记回复在哪段对话的哪一条，不记数字</td></tr>
+    <tr><td class="k">授权边界</td>
+      <td class="a">只交家长消息摘要，学生编号、姓名、电话都不交；每条回复由老师本人发送；通知格式要不要长期保存还没定，所以不写进文件</td>
+      <td class="b">只交口径和查询思路，不交原始数据；发到别的对话前先给她看；转发给同事由她本人做；只有口径获准长期保存</td></tr>
+    <tr><td class="k">没有加入</td>
+      <td class="a">按轻重排序、到期提醒、消息量统计、代发按钮</td>
+      <td class="b">部门看板（她明确否定过）、截止日期、优先级、统计图、周报</td></tr>
+  </table>
+  <p class="note">两份工作台都是本机文档，因为两人确认的需求用一份记录就能满足，历史里也没有需要网页的证据。差别在文档里记什么、怎么用。完整依据见 evals/personal-agent-workbench/demos/comparison.md。</p>
+</div>
+</body>
+</html>
