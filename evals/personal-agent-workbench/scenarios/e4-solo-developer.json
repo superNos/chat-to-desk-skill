@@ -80,10 +80,10 @@
     }
   ],
   "expected": {
-    "conclusion": "轻量做法",
+    "conclusion": "小工作台",
     "elements": [
       {
-        "name": "仓库约定开场说明",
+        "name": "仓库约定资料（交接时带上）",
         "kind": "背景资料",
         "evidence": [
           "H1",
@@ -124,7 +124,7 @@
       "destination": "新工作",
       "expected_status": "需手动完成",
       "requires_confirmation": false,
-      "note": "带上仓库约定开场说明",
+      "note": "交接内容自动带上仓库约定资料",
       "kind": "用户输入"
     },
     {

@@ -55,3 +55,16 @@
 - [x] 8.3 绘制“它是怎么工作的”流程图和两个演示的对比图，截图前确认渲染正确，README 写有意义的替代文字
 - [x] 8.4 新增 `scripts/install.py`：默认只预览，加 `--apply` 才复制，目标已存在时停止，不覆盖、不删除
 - [x] 8.5 由独立复核者在发布包的最终状态上复核 README 可读性、图片、链接和安全扫描
+
+## 9. v0.2.0 方向修正：主要产出改为可交互工作台
+
+- [x] 9.1 修改 proposal、design 与各能力规格：主要产出是本机可交互工作台，“暂不需要复杂工作台”改为最小工作台；新增 `workbench-local-runtime` 能力
+- [x] 9.2 新增运行支持 `skills/personal-agent-workbench/scripts/workbench.py`（仅标准库）与 `scripts/client.js`：页面服务、记录保存、交接、状态证据、Codex 适配器与 `codex-probe`、`check`；不含任何页面布局或职业字段
+- [x] 9.3 新增 `references/runtime.md`，并同步修改 `SKILL.md`、`agents/openai.yaml` 与各参考文件，去掉“可以只是文档”的规则
+- [x] 9.4 新增 `tests/test_workbench_runtime.py`：令牌、Host/Origin、目标白名单、请求大小、私有文件、状态不倒退与最新情况未知、手动交接路径、Codex 适配器（假会话）、审批请求拒绝
+- [x] 9.5 调整 `scripts/check_skill.py`：技能目录允许且只允许这两个运行支持文件，仍禁止页面、样式和图片；调整场景结论与对应测试
+- [x] 9.6 用隔离的临时 CODEX_HOME 和只用于测试的临时对话，核实 Codex 适配器的发起与取回各一次（维护者自述，记录未随发布包公开）；未核实的环节如实记录：Claude、WorkBuddy 未验证，审批拒绝只用假会话测试
+- [x] 9.7 在互不相通的全新会话中从头重跑 E1、E3 前向演示，产出工作台配置、页面、工作台说明和过程记录；真实启动工作台，在页面上完成“发起 → 看到状态 → 得到结果”并截图
+- [x] 9.8 更新评估说明、演示说明与对比、README、对比图与流程图、CHANGELOG（v0.2.0）、SECURITY
+- [x] 9.9 运行全部测试、`scripts/check_skill.py`、`scripts/release_check.py` 与 `openspec validate design-personal-agent-workbench --strict`
+- [x] 9.10 由独立复核者在最终文件状态上复核方向、因人而异、可追溯、状态诚实、本机安全、公开安全扫描、README 可读性和截图；不通过则返工并再复核

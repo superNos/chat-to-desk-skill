@@ -1,0 +1,87 @@
+{
+ "schema": 1,
+ "records": {
+  "question-random1": {
+   "title": "（虚构试用）活跃会员数",
+   "metric": "活跃会员"
+  },
+  "route-h2": "（模拟）新对话「活跃会员数」，演示日"
+ },
+ "handoffs": [
+  {
+   "target": "agent",
+   "intent": "new",
+   "about": "",
+   "ref": "question-random1",
+   "background": "活跃会员指近 30 天有消费的会员",
+   "ask": "按已确认口径说明去重思路",
+   "expect": "请给出查询结果。",
+   "confirmAfter": true,
+   "continues": "",
+   "text": "【去向】新工作\n【背景】活跃会员指近 30 天有消费的会员\n【这次要做】按已确认口径说明去重思路\n【完成后给我】请给出查询结果。",
+   "id": "h1",
+   "createdAt": "2026-11-19 21:14:44",
+   "status": "待确认",
+   "unknown": false,
+   "note": "",
+   "direct": false,
+   "results": [
+    {
+     "n": 1,
+     "time": "2026-11-19 21:14:59",
+     "source": "你粘贴回来的结果",
+     "text": "【模拟 Agent 回复，演示人粘贴】按会员编号去重，只统计近 30 天内至少有一笔消费的会员；退款单不计入消费。查询思路已整理，可以按这个口径答复。"
+    }
+   ],
+   "events": [
+    {
+     "time": "2026-11-19 21:14:44",
+     "status": "需手动完成",
+     "evidence": "交接内容已备好，等你复制到对话里"
+    },
+    {
+     "time": "2026-11-19 21:14:51",
+     "status": "已发送",
+     "evidence": "你确认已粘贴到对话里"
+    },
+    {
+     "time": "2026-11-19 21:14:59",
+     "status": "待确认",
+     "evidence": "你粘贴回来的结果；下一步要你自己决定"
+    }
+   ]
+  },
+  {
+   "target": "agent",
+   "intent": "continue",
+   "about": "原查询",
+   "ref": "question-random1",
+   "background": "活跃会员指近 30 天有消费的会员",
+   "ask": "在上次的查询上接着做：按门店拆开",
+   "expect": "请给出查询结果。",
+   "confirmAfter": true,
+   "continues": "h1",
+   "text": "【去向】继续某件事：原查询（请粘贴到原来那个对话里）\n【背景】活跃会员指近 30 天有消费的会员\n【这次要做】在上次的查询上接着做：按门店拆开\n【完成后给我】请给出查询结果。",
+   "id": "h2",
+   "createdAt": "2026-11-19 21:15:13",
+   "status": "已发送",
+   "unknown": false,
+   "note": "",
+   "direct": false,
+   "results": [],
+   "events": [
+    {
+     "time": "2026-11-19 21:15:13",
+     "status": "需手动完成",
+     "evidence": "交接内容已备好，等你复制到对话里"
+    },
+    {
+     "time": "2026-11-19 21:15:23",
+     "status": "已发送",
+     "evidence": "你确认已粘贴到对话里"
+    }
+   ]
+  }
+ ],
+ "next": 3
+}

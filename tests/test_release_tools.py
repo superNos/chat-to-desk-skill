@@ -102,6 +102,15 @@ class ReleaseCheckTest(unittest.TestCase):
         self.assertTrue(release_check.url_allowed("https://github.com/superNos/personal-agent-workbench-skill.git"))
         self.assertFalse(release_check.url_allowed("https://github.com/superNos/personal-agent-workbench-skill" + "-fork"))
 
+    def test_loopback_and_example_hosts(self):
+        """本机回环地址（含代码里拼出的端口）和示例域名放行，伪装成本机的外部域名不放行。"""
+        self.assertTrue(release_check.url_allowed("http://127.0.0.1:{server.port}/"))
+        self.assertTrue(release_check.url_allowed("http://127.0.0.1:8765/api/state"))
+        self.assertTrue(release_check.url_allowed("https://docs.example.com/x"))
+        self.assertFalse(release_check.url_allowed("http" + "://127.0.0.1.evil-site.cn/"))
+        self.assertFalse(release_check.url_allowed("http" + "://localhost-mirror.cn/"))
+        self.assertFalse(release_check.url_allowed("http" + "://127.0.0.1" + "@evil-site.cn/"))
+
     def test_local_paths_cover_common_forms(self):
         """本机路径规则覆盖 /home 下大小写开头的用户名和 /private 下的各类目录。"""
         for sample in ("/ho" + "me/Alice/x", "/pri" + "vate/etc/hosts", "C:\\" + "Users\\bob\\x"):
@@ -154,6 +163,38 @@ class ReleaseCheckTest(unittest.TestCase):
         self.assertIn("发布包以外", errors)
         self.assertIn("锚点不存在", errors)
         self.assertIn("替代文字", errors)
+
+    def test_code_blocks_skipped_but_real_html_refs_checked(self):
+        """Markdown 代码块里的示例路径不算链接；代码块外的绝对路径和 HTML 文件里的引用照常检查。"""
+        self.write("docs/a.md", "# 标题\n\n```html\n<script src=\"/_workbench/client.js\"></script>\n```\n")
+        self.assertEqual(release_check.check_links(self.root), [])
+        self.write("docs/a.md", "# 标题\n\n<img src=\"/abs/outside.png\" alt=\"示意\">\n")
+        self.assertTrue(any("发布包以外" in e for e in release_check.check_links(self.root)))
+        self.write("docs/c.html", "<script src=\"/_workbench/client.js\"></script>\n")
+        self.assertTrue(any("c.html" in e for e in release_check.check_links(self.root)))
+
+    def test_workbench_page_paths_resolve_inside_page_dir(self):
+        """工作台页面的 / 开头地址按运行支持解析：/_workbench/client.js 对应技能里的文件，其余必须在 page/ 内存在。"""
+        self.write("skills/personal-agent-workbench/scripts/client.js", "// 示例\n")
+        self.write("demo/workbench.json", "{}\n")
+        self.write("demo/page/app.js", "// 示例\n")
+        self.write("demo/page/index.html", "<script src=\"/_workbench/client.js\"></script><script src=\"/app.js\"></script>\n")
+        self.assertEqual(release_check.check_links(self.root), [])
+        self.write("demo/page/index.html", "<script src=\"/missing.js\"></script>\n")
+        self.assertTrue(any("不存在" in e for e in release_check.check_links(self.root)))
+        self.write("demo/page/index.html", "<script src=\"/../workbench.json\"></script>\n")
+        self.assertTrue(any("页面目录以外" in e for e in release_check.check_links(self.root)))
+        # 不在工作台目录里的 page/ 不享受这条规则
+        self.write("other/page/index.html", "<script src=\"/app.js\"></script>\n")
+        self.assertTrue(any("other/page" in e and "发布包以外" in e for e in release_check.check_links(self.root)))
+
+    def test_placeholder_link_targets_reported(self):
+        """[文字](<占位>/路径) 这种打不开的占位链接要报出来；合法的尖括号链接照常检查。"""
+        self.write("docs/b.md", "# 标题\n")
+        self.write("docs/a.md", "见 [b](<b.md>)\n")
+        self.assertEqual(release_check.check_links(self.root), [])
+        self.write("docs/a.md", "见 [说明](<演示目录>/output/说明.md)\n")
+        self.assertTrue(any("占位" in e for e in release_check.check_links(self.root)))
 
 
 class InstallScriptTest(unittest.TestCase):

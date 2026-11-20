@@ -1,0 +1,22 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #fff; color: #202d38; font: 15px/1.5 system-ui, sans-serif; }
+main { max-width: 72rem; margin: auto; padding: .8rem clamp(1rem, 3vw, 2.5rem) 2rem; }
+h1 { font-size: 1.2rem; margin: 0 0 1rem; padding-bottom: .65rem; border-bottom: 1px solid #c7cfd6; }
+h2, h3 { font-size: 1.05rem; margin: .4rem 0; }
+main > section:first-of-type { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem 1rem; background: #f1f4f6; padding: .4rem .8rem; }
+main > section:first-of-type p { margin: 0; }
+#new { display: flex; flex-wrap: wrap; align-items: end; gap: .4rem 1rem; }
+#new label { flex: 1 1 14rem; margin: 0; }
+section, article { padding: .75rem 0; border-bottom: 1px solid #d7dde2; }
+article section { border-left: 2px solid #c1ccd5; padding-left: .8rem; margin: .6rem 0; }
+label { display: block; margin: .55rem 0; }
+input, textarea, select { display: block; width: 100%; padding: .4rem .55rem; border: 1px solid #8a98a4; border-radius: 3px; font: inherit; background: white; color: inherit; }
+textarea { min-height: 5rem; resize: vertical; }
+button { background: #fff; color: #214e69; border: 1px solid #7591a2; border-radius: 3px; padding: .4rem .7rem; margin: .2rem .5rem .2rem 0; font: inherit; cursor: pointer; }
+#new button { background: #24516b; color: #fff; margin: 0; }
+button:disabled { opacity: .6; }
+:focus-visible { outline: 2px solid #246181; outline-offset: 2px; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; background: #f2f5f7; padding: .65rem; }
+summary { cursor: pointer; overflow-wrap: anywhere; }
+details { margin: .45rem 0; }
+#feedback:empty { display: none; }

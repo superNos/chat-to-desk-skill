@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>家长沟通工作台</title>
+<link rel="stylesheet" href="style.css">
+<script defer src="/_workbench/client.js"></script>
+<script defer src="app.js"></script>
+</head>
+<body>
+<header><h1>家长沟通工作台</h1></header>
+<main>
+<p id="feedback" role="status"></p>
+<section>
+<h2>还没回的家长消息</h2>
+<div id="pending"></div>
+<details><summary>记一条新消息</summary>
+<form id="new-message">
+<label>学生代号（仅本机查找）<input name="student" required maxlength="32" placeholder="例如 S01"></label>
+<label>家长消息摘要<textarea name="summary" required maxlength="3000" placeholder="用自己的话概括，去掉姓名、电话和其他个人信息"></textarea></label>
+</form>
+</details>
+</section>
+<section>
+<h2>按学生找以前的沟通</h2>
+<label>学生代号<input id="search" type="search" placeholder="输入完整代号"></label>
+<div id="history"></div>
+</section>
+<section class="privacy"><h2>交接与发送</h2><p>历史摘要可读取。发起、继续对话和取回结果的能力待核实，试用时由你手动复制粘贴。每次只交你确认过的家长消息摘要和不含个人信息的写作要求。学生代号、姓名、电话和对话位置留在本机。给家长发送由你本人完成。</p></section>
+</main>
+</body>
+</html>

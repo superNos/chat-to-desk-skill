@@ -1,0 +1,1 @@
+{"title":"临时数据问题工作台","targets":{"agent":{"label":"原 Agent 平台","platform":"演示平台","adapter":"manual","capabilities":{"发起工作":"已核实","继续同一工作":"已核实","取回结果":"待核实"}}}}

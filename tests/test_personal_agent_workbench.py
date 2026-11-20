@@ -23,7 +23,7 @@ DEMO_DIR = EVAL_DIR / "demos"
 CHANGE_DIR = ROOT / "openspec" / "changes" / "design-personal-agent-workbench"
 SKILL_NAME = "personal-agent-workbench"
 
-CONCLUSIONS = {"需要工作台", "轻量做法", "暂不需要复杂工作台"}
+CONCLUSIONS = {"需要工作台", "小工作台", "暂不需要复杂工作台"}
 DESTINATIONS = {"新工作", "继续某件事", "修改结果", "需先询问"}
 STATUSES = {"已发送", "已开始", "已完成", "待确认", "失败", "需手动完成", "无法确认"}
 PROBE_KINDS = {"用户输入", "平台事件"}
@@ -98,10 +98,10 @@ class SkillEntryTest(unittest.TestCase):
             for target in re.findall(r"\]\(([^)#:]+\.md)\)", path.read_text(encoding="utf-8")):
                 self.assertTrue((path.parent / target).is_file(), f"{path.name} -> {target}")
 
-    def test_skill_ships_no_fixed_runtime(self):
-        """技能不内置页面模板或运行脚本，避免形成默认工作台。"""
+    def test_skill_ships_no_page_template(self):
+        """技能不内置页面模板；scripts/ 只有与工作内容无关的运行支持和接口封装。"""
         self.assertFalse((SKILL_DIR / "assets").exists())
-        self.assertFalse((SKILL_DIR / "scripts").exists())
+        self.assertEqual(sorted(p.name for p in (SKILL_DIR / "scripts").iterdir()), ["client.js", "workbench.py"])
 
     def test_eval_material_not_inside_skill(self):
         """含期望结论的评估材料不放进技能目录。"""
@@ -118,22 +118,30 @@ class SkillEntryTest(unittest.TestCase):
         self.assertIn("不是默认模板", (DEMO_DIR / "README.md").read_text(encoding="utf-8"))
 
     def test_demos_cover_two_scenarios_with_required_outputs(self):
-        """每个演示都有工作模型、工作台说明、静态预览、截图和过程记录，预览不引用外部资源。"""
+        """每个演示都是真实工作台：有配置和页面、工作模型、工作台说明、过程记录、试用记录、截图和逐轮记录。"""
+        spec = importlib.util.spec_from_file_location("demo_workbench", SKILL_DIR / "scripts" / "workbench.py")
+        workbench = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(workbench)
         for name in ("e1-class-teacher", "e3-business-analyst"):
             demo = DEMO_DIR / name
             output = demo / "agent-output"
-            # 文件名由被评估的 Agent 自行决定，这里按作用匹配
+            # 工作模型的文件名由被评估的 Agent 自行决定，这里按作用匹配：除说明和过程记录以外的那份
             names = {p.name for p in output.glob("*.md")}
-            self.assertTrue(
-                any("工作模型" in n or "我对你工作的理解" in n for n in names), f"{name} 缺工作模型"
-            )
             self.assertTrue(any("工作台" in n and "说明" in n for n in names), f"{name} 缺工作台说明")
-            for required in ("preview.html", "过程记录.md"):
-                self.assertTrue((output / required).is_file(), f"{name} 缺 {required}")
+            self.assertTrue(
+                [n for n in names if "说明" not in n and n != "过程记录.md"], f"{name} 缺工作模型"
+            )
+            self.assertIn("过程记录.md", names, f"{name} 缺过程记录")
+            self.assertFalse((output / "preview.html").exists(), f"{name} 不应再用静态预览代替工作台")
+            self.assertEqual(workbench.check_dir(output), [], name)
             self.assertTrue((demo / "screenshot.png").is_file(), f"{name} 缺截图")
             self.assertTrue((demo / "transcript.md").is_file(), f"{name} 缺逐轮记录")
-            html = (output / "preview.html").read_text(encoding="utf-8")
-            self.assertIsNone(re.search(r"(https?:)?//[a-z0-9.-]+\.[a-z]{2,}/", html, re.I), name)
+            # 试用记录要能看出真的在页面上走过一遍手动交接，并且结果是演示人粘贴的模拟回复
+            state = json.loads((demo / "trial-state.json").read_text(encoding="utf-8"))
+            first = state["handoffs"][0]
+            self.assertEqual([e["status"] for e in first["events"]], ["需手动完成", "已发送", "待确认"], name)
+            self.assertTrue(first["results"][0]["text"].startswith("【模拟 Agent 回复"), name)
+            self.assertFalse(any(h["direct"] for h in state["handoffs"]), name)
 
 
 class ScenarioStructureTest(unittest.TestCase):
@@ -176,14 +184,13 @@ class ScenarioStructureTest(unittest.TestCase):
                     self.assertIn(ref, hist, f'{s["id"]} {element["name"]} 引用不存在的 {ref}')
                     self.assertIn(ref, usable, f'{s["id"]} {element["name"]} 引用未确认的 {ref}')
 
-    def test_no_workbench_means_no_elements(self):
-        """结论为暂不需要时不列元素，并说明何时再评估。"""
+    def test_every_conclusion_still_gets_a_workbench(self):
+        """每种结论都有工作台元素；暂不需要复杂工作台时只有最小工作台（最多两样），并说明何时再加。"""
         for s in self.scenarios:
+            self.assertTrue(s["expected"]["elements"], s["id"])
             if s["expected"]["conclusion"] == "暂不需要复杂工作台":
-                self.assertEqual(s["expected"]["elements"], [], s["id"])
+                self.assertLessEqual(len(s["expected"]["elements"]), 2, s["id"])
                 self.assertTrue(s["expected"].get("reevaluate_when"), s["id"])
-            else:
-                self.assertTrue(s["expected"]["elements"], s["id"])
 
     def test_elements_avoid_own_forbidden_list(self):
         """期望元素不命中本场景的禁止清单。"""

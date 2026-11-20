@@ -83,6 +83,8 @@ ALLOWED_URL_PREFIXES = (
 LONG_TOKEN = re.compile(r"[A-Za-z0-9+/_=-]{32,}")
 
 MD_LINK = re.compile(r"(!?)\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\)")
+# 形如 [文字](<占位>/路径) 的链接：尖括号在路径中途就闭合了，既不是合法的 Markdown 链接，也打不开
+PLACEHOLDER_LINK = re.compile(r"\]\(\s*<[^>\n]*>[^)\s]")
 HTML_REF = re.compile(r"\b(href|src)\s*=\s*\"([^\"]+)\"", re.I)
 HTML_IMG = re.compile(r"<img\b[^>]*>", re.I)
 HTML_ID = re.compile(r"\bid\s*=\s*\"([^\"]+)\"", re.I)
@@ -107,7 +109,16 @@ def shannon_entropy(text: str) -> float:
     return -sum(n / len(text) * math.log2(n / len(text)) for n in counts.values())
 
 
+# 本机回环地址和 RFC 2606 保留的示例域名不会指向真实的外部服务
+LOCAL_OR_EXAMPLE_HOST = re.compile(
+    r"^https?://(?:127\.0\.0\.1|localhost|(?:[a-z0-9-]+\.)*(?:example\.(?:com|org|net)|example|test|invalid))(?::[^/?#\s]*)?(?:[/?#]|$)",
+    re.I,
+)
+
+
 def url_allowed(url: str) -> bool:
+    if LOCAL_OR_EXAMPLE_HOST.match(url):
+        return True
     for prefix in ALLOWED_URL_PREFIXES:
         if prefix.endswith("/"):
             if url.startswith(prefix):
@@ -257,6 +268,18 @@ def heading_slugs(text: str) -> set[str]:
     return slugs
 
 
+RUNTIME_CLIENT_URL = "/_workbench/client.js"
+RUNTIME_CLIENT_FILE = Path("skills") / "personal-agent-workbench" / "scripts" / "client.js"
+
+
+def workbench_page_root(path: Path) -> Path | None:
+    """工作台目录里 page/ 下的页面返回 page/ 的绝对路径，其它文件返回 None。"""
+    for parent in path.resolve().parents:
+        if parent.name == "page" and (parent.parent / "workbench.json").is_file():
+            return parent
+    return None
+
+
 def check_links(root: Path) -> list[str]:
     """Markdown 与 HTML 中的相对链接必须在发布包内存在；图片必须有替代文字。"""
     errors = []
@@ -265,23 +288,38 @@ def check_links(root: Path) -> list[str]:
         if not path.is_file() or path.suffix.lower() not in {".md", ".html"}:
             continue
         text = path.read_text(encoding="utf-8")
+        page_root = workbench_page_root(path)
         targets = []
+        # Markdown 代码块里是示例代码（如运行时提供的 /_workbench/client.js），不是发布包内链接
+        scan = text
         if path.suffix.lower() == ".md":
-            stripped = re.sub(r"```.*?```", "", text, flags=re.S)
-            for bang, label, target in MD_LINK.findall(stripped):
+            scan = re.sub(r"```.*?```", "", text, flags=re.S)
+            for match in PLACEHOLDER_LINK.finditer(scan):
+                errors.append(f"{rel}：链接目标是占位写法，打不开：{scan[match.start():match.end() + 30].splitlines()[0]}")
+            for bang, label, target in MD_LINK.findall(scan):
                 if bang and not label.strip():
                     errors.append(f"{rel}：图片缺少替代文字：{target}")
                 targets.append(target)
-        for tag in HTML_IMG.findall(text):
+        for tag in HTML_IMG.findall(scan):
             alt = re.search(r"\balt\s*=\s*\"([^\"]*)\"", tag, re.I)
             if not alt or not alt.group(1).strip():
                 errors.append(f"{rel}：<img> 缺少替代文字")
-        targets.extend(value for _, value in HTML_REF.findall(text))
+        targets.extend(value for _, value in HTML_REF.findall(scan))
         for target in targets:
             if re.match(r"^(?:https?:|mailto:|data:)", target, re.I):
                 continue
             file_part, _, anchor = target.partition("#")
-            dest = (path.parent / file_part).resolve() if file_part else path.resolve()
+            if file_part.startswith("/") and page_root is not None:
+                # 工作台页面里以 / 开头的地址由运行支持解析：/_workbench/ 是运行支持自带的接口封装，其余对应 page/ 目录
+                if file_part == RUNTIME_CLIENT_URL:
+                    dest = (root / RUNTIME_CLIENT_FILE).resolve()
+                else:
+                    dest = (page_root / file_part.lstrip("/")).resolve()
+                    if not dest.is_relative_to(page_root):
+                        errors.append(f"{rel}：链接指向工作台页面目录以外：{target}")
+                        continue
+            else:
+                dest = (path.parent / file_part).resolve() if file_part else path.resolve()
             if not dest.is_relative_to(root):
                 errors.append(f"{rel}：链接指向发布包以外：{target}")
                 continue

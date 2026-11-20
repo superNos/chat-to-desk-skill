@@ -9,6 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_DIR = ROOT / "skills" / "personal-agent-workbench"
 INVOCATION = "$personal-agent-workbench"
+RUNTIME_FILES = {"workbench.py", "client.js"}
+PAGE_SUFFIXES = {".html", ".htm", ".css", ".png", ".jpg", ".jpeg", ".svg", ".webp", ".gif"}
 
 
 def check() -> list[str]:
@@ -30,10 +32,23 @@ def check() -> list[str]:
     present = {f"references/{p.name}" for p in (SKILL_DIR / "references").glob("*.md")}
     for rel in sorted(present - linked):
         errors.append(f"参考文件没有从 SKILL.md 路由：{rel}")
-    allowed_top = {"SKILL.md", "agents", "references"}
+    allowed_top = {"SKILL.md", "agents", "references", "scripts"}
     for child in SKILL_DIR.iterdir():
         if child.name not in allowed_top:
             errors.append(f"技能目录出现了预期之外的内容：{child.name}")
+    # 运行支持只允许这两个与工作内容无关的文件；页面、样式、图片一律不放进技能目录
+    scripts = {p.name for p in (SKILL_DIR / "scripts").iterdir()} if (SKILL_DIR / "scripts").is_dir() else set()
+    if scripts != RUNTIME_FILES:
+        errors.append(f"scripts/ 只应包含 {sorted(RUNTIME_FILES)}，实际是 {sorted(scripts)}")
+    for path in SKILL_DIR.rglob("*"):
+        if path.suffix.lower() in PAGE_SUFFIXES:
+            errors.append(f"技能目录里不应有页面或图片文件：{path.relative_to(SKILL_DIR)}")
+    runtime_doc = SKILL_DIR / "references" / "runtime.md"
+    if runtime_doc.is_file():
+        doc = runtime_doc.read_text(encoding="utf-8")
+        for name in sorted(RUNTIME_FILES):
+            if name not in doc:
+                errors.append(f"references/runtime.md 没有说明 scripts/{name}")
     return errors
 
 
@@ -43,7 +58,7 @@ def main() -> int:
         print("技能检查失败：")
         print("\n".join(f"- {error}" for error in errors))
         return 1
-    print("技能检查通过：入口、调用名与参考文件路由一致，技能目录只含说明文件。")
+    print("技能检查通过：入口、调用名与参考文件路由一致；技能目录只含说明文件和与工作内容无关的运行支持，没有页面或图片。")
     return 0
 
 
