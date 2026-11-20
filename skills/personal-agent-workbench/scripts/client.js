@@ -59,6 +59,8 @@
     deleteRecord: (key, confirmed) =>
       call("DELETE", "/api/records/" + encodeURIComponent(key), { confirmed: confirmed === true }),
     // 发起交接：{ target, intent: "new"|"continue"|"revise", about, ref, background, ask, expect, confirmAfter, continues }
+    run: (fields) => call("POST", "/api/runs", fields),
+    // 旧版页面兼容入口。新工作台的执行按钮调用 run。
     handoff: (fields) => call("POST", "/api/handoffs", fields),
     // 用户自己把交接内容粘贴到对话后点的
     markPasted: (id) => call("POST", handoffPath(id, "pasted"), {}),

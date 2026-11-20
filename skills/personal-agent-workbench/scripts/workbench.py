@@ -650,7 +650,7 @@ class Workbench:
 
     # 交接
 
-    def create_handoff(self, payload) -> dict:
+    def create_handoff(self, payload, *, require_direct: bool = False) -> dict:
         if not isinstance(payload, dict):
             raise WorkbenchError(400, "需要 JSON 对象")
         config = self.config()
@@ -673,6 +673,8 @@ class Workbench:
             "continues": text_field(payload, "continues", 10, required=False),
         }
         direct = auto_send(target, intent)
+        if require_direct and (not direct or not auto_result(target)):
+            raise WorkbenchError(409, "执行或结果回传尚未接通，本次工作未发送")
         handoff["text"] = compose_text(config, handoff, manual=not direct)
         if len(handoff["text"]) > MAX_TEXT:
             raise WorkbenchError(400, f"交接内容超过 {MAX_TEXT} 字")
@@ -919,6 +921,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply_json(200, workbench.put_record(parts[1], payload))
             if len(parts) == 2 and parts[0] == "records" and method == "DELETE":
                 return self.reply_json(200, workbench.delete_record(parts[1], payload))
+            if parts == ["runs"] and method == "POST":
+                return self.reply_json(200, workbench.create_handoff(payload, require_direct=True))
             if parts == ["handoffs"] and method == "POST":
                 return self.reply_json(200, workbench.create_handoff(payload))
             if len(parts) == 3 and parts[0] == "handoffs" and method == "POST":

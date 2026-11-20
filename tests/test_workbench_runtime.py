@@ -125,6 +125,23 @@ class LogicTest(unittest.TestCase):
     def get(self, bench, handoff_id):
         return wb.find_handoff(bench.store.read(), handoff_id)
 
+    def test_run_requires_verified_dispatch_and_return(self):
+        payload = {"target": "draft", "intent": "new", "ask": "核对记录", "expect": "核对结论"}
+        targets = {
+            "send_only": dict(CODEX_VERIFIED, capabilities={"发起工作": "已核实"}),
+            "read_only": dict(CODEX_VERIFIED, capabilities={"取回结果": "已核实"}),
+            "manual": {"label": "旧工作台", "adapter": "manual"},
+        }
+        bench = self.bench(targets, FakeSession())
+        for key in targets:
+            with self.subTest(key=key):
+                payload["target"] = key
+                with self.assertRaises(wb.WorkbenchError) as error:
+                    bench.create_handoff(payload, require_direct=True)
+                self.assertEqual(error.exception.status, 409)
+                self.assertEqual(bench.store.read()["handoffs"], [])
+                self.assertEqual(self.sessions, [])
+
     def test_manual_handoff_starts_as_needs_manual(self):
         """手动交接生成可复制内容，状态为需手动完成，不会显示为已发送。"""
         bench = self.bench()
@@ -198,7 +215,7 @@ class LogicTest(unittest.TestCase):
         """能力已核实时直接交给配置里的对话：已发送 → 已开始 → 拿到回复后已完成。"""
         session = FakeSession()
         bench = self.bench({"draft": CODEX_VERIFIED}, session)
-        handoff_id = self.handoff(bench)
+        handoff_id = bench.create_handoff({"target": "draft", "intent": "new", "ask": "起草回复", "expect": "回复草稿"}, require_direct=True)["id"]
         self.assertTrue(wait_for(lambda: self.get(bench, handoff_id)["status"] == "已完成"))
         item = self.get(bench, handoff_id)
         self.assertEqual([e["status"] for e in item["events"]], ["需手动完成", "已发送", "已开始", "已完成"])
