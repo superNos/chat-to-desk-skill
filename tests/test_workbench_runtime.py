@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 import http.client
 import importlib.util
 import json
@@ -64,7 +65,7 @@ class FakeSession:
         self.sent.append((thread_id, text))
         return "turn-1"
 
-    def wait_turn(self, turn_id, minutes, on_started=None):
+    def wait_turn(self, turn_id, minutes, on_started=None, on_progress=None):
         if self.started and on_started:
             on_started()
         if self.outcome in ("timeout", "exit"):
@@ -207,6 +208,54 @@ class LogicTest(unittest.TestCase):
         with self.assertRaises(wb.WorkbenchError):
             bench.act(handoff_id, "pasted", {})
 
+    def test_completed_commentary_and_final_stay_with_their_turn(self):
+        """仅保存本轮最新的完整进度，结束时取回本轮结论。"""
+        def message(text, phase="commentary"):
+            return {"type": "agentMessage", "phase": phase, "text": text}
+
+        def event(text, turn="turn-1", method="item/completed"):
+            return {"method": method, "params": {"turnId": turn, "item": message(text)}}
+
+        finish = threading.Event()
+
+        class EventSession(FakeSession):
+            wait_turn = wb.CodexSession.wait_turn
+
+            def next_event(self, deadline):
+                return next(events)
+
+        def notifications():
+            yield event("正在核对")
+            yield event("已核对两项")
+            yield event("其他工作", turn="turn-2")
+            yield event("半句话", method="item/agentMessage/delta")
+            yield event("  ")
+            finish.wait(3)
+            yield {"method": "turn/completed", "params": {"turn": {
+                "id": "turn-1", "status": "completed", "items": [message("本轮结论", "final_answer")]
+            }}}
+
+        events = notifications()
+        bench = self.bench({"draft": CODEX_VERIFIED}, EventSession())
+        handoff_id = self.handoff(bench, ref="示例对象")
+        try:
+            self.assertTrue(wait_for(lambda: self.get(bench, handoff_id).get("progress", {}).get("text") == "已核对两项"))
+            item = wb.Workbench(bench.root).public_state()["handoffs"][0]
+            self.assertEqual(item["ref"], "示例对象")
+            self.assertEqual(item["progress"]["text"], "已核对两项")
+            self.assertTrue(item["progress"]["time"])
+            self.assertEqual(item["results"], [])
+        finally:
+            finish.set()
+        self.assertTrue(wait_for(lambda: self.get(bench, handoff_id)["status"] == "已完成"))
+        item = self.get(bench, handoff_id)
+        self.assertEqual(item["progress"]["text"], "已核对两项")
+        self.assertEqual([result["text"] for result in item["results"]], ["本轮结论"])
+        legacy = {"type": "agentMessage", "text": "旧版回复"}
+        self.assertEqual(wb.final_text([message("结论", "final"), legacy, message("进展")]), "结论")
+        self.assertEqual(wb.final_text([legacy, message("进展")]), "旧版回复")
+        self.assertEqual(wb.final_text([message("进展")]), "")
+
     def test_codex_without_result_capability_does_not_claim_done(self):
         """取回结果没核实时，这一轮结束也只记已开始，并提示用户手动带回结果。"""
         target = dict(CODEX_VERIFIED, capabilities={"发起工作": "已核实", "继续同一工作": "已核实", "取回结果": "待核实"})
@@ -276,29 +325,35 @@ class LogicTest(unittest.TestCase):
         self.assertEqual(item["status"], "已完成")
         self.assertEqual(item["results"][-1]["text"], "刷新取回")
 
-    def test_same_turn_result_saved_once(self):
-        """重新查询先取回了结果、用户也确认了，后台等待随后拿到同一轮结局时不再加一版，也不撤销确认。"""
-        release = threading.Event()
+    def test_parallel_refresh_uses_live_watcher_until_session_closed(self):
+        """监听和关闭会话期间，并发查询都从原会话取得进展；退出后才允许补查。"""
+        closing, release = threading.Event(), threading.Event()
 
-        class SlowSession(FakeSession):
-            def wait_turn(self, turn_id, minutes, on_started=None):
+        class ClosingSession(FakeSession):
+            def close(self):
+                closing.set()
                 release.wait(3)
-                return super().wait_turn(turn_id, minutes, on_started)
+                super().close()
 
-        slow = SlowSession(text="后台取回")
-        root = make_dir(self.base, {"draft": CODEX_VERIFIED})
-        sessions = [slow, FakeSession()]
-        bench = wb.Workbench(root, session_factory=lambda _b: sessions.pop(0), codex_locator=lambda: "codex")
+        slow = ClosingSession(text="后台取回")
+        bench = self.bench({"draft": CODEX_VERIFIED}, slow)
         handoff_id = self.handoff(bench, confirmAfter=True)
-        bench.act(handoff_id, "refresh", {})
-        self.assertEqual(self.get(bench, handoff_id)["status"], "待确认")
+        try:
+            self.assertTrue(closing.wait(3))
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                replies = list(pool.map(lambda _: bench.act(handoff_id, "refresh", {}), range(4)))
+            self.assertEqual(replies, [{"ok": True}] * 4)
+            self.assertEqual(self.sessions, [slow])
+            self.assertEqual(self.get(bench, handoff_id)["status"], "已开始")
+        finally:
+            release.set()
+        self.assertTrue(wait_for(lambda: self.get(bench, handoff_id)["status"] == "待确认"))
         bench.act(handoff_id, "done", {"note": "我已自己发出"})
-        release.set()
-        self.assertTrue(wait_for(lambda: slow.closed))
-        time.sleep(0.05)
+        bench.act(handoff_id, "refresh", {})
+        self.assertEqual(len(self.sessions), 2)
         item = self.get(bench, handoff_id)
         self.assertEqual(item["status"], "已完成")
-        self.assertEqual([r["text"] for r in item["results"]], ["刷新取回"])
+        self.assertEqual([r["text"] for r in item["results"]], ["后台取回"])
 
     def test_page_dir_must_be_real_folder(self):
         """page/ 是指向工作台以外的软链接时拒绝启动，检查也不通过。"""
@@ -314,13 +369,13 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(any("软链接" in p for p in wb.check_dir(root)))
 
     def test_late_started_event_keeps_pending_confirmation(self):
-        """重新查询已取回结果、等用户确认时，后台迟到的“已开始”不能把状态拉回去，用户之后仍能确认。"""
+        """用户已粘贴结果、等用户确认时，后台迟到的“已开始”不能把状态拉回去，用户之后仍能确认。"""
         release = threading.Event()
 
         class SlowSession(FakeSession):
-            def wait_turn(self, turn_id, minutes, on_started=None):
+            def wait_turn(self, turn_id, minutes, on_started=None, on_progress=None):
                 release.wait(3)
-                return super().wait_turn(turn_id, minutes, on_started)
+                return super().wait_turn(turn_id, minutes, on_started, on_progress)
 
         slow = SlowSession(text="后台取回")
         root = make_dir(self.base, {"draft": CODEX_VERIFIED})
@@ -328,6 +383,8 @@ class LogicTest(unittest.TestCase):
         bench = wb.Workbench(root, session_factory=lambda _b: sessions.pop(0), codex_locator=lambda: "codex")
         handoff_id = self.handoff(bench, confirmAfter=True)
         bench.act(handoff_id, "refresh", {})
+        self.assertEqual(len(sessions), 1)
+        bench.act(handoff_id, "result", {"text": "我带回的回复"})
         release.set()
         self.assertTrue(wait_for(lambda: slow.closed))
         time.sleep(0.05)
@@ -449,9 +506,9 @@ class LogicTest(unittest.TestCase):
         release = threading.Event()
 
         class SlowSession(FakeSession):
-            def wait_turn(self, turn_id, minutes, on_started=None):
+            def wait_turn(self, turn_id, minutes, on_started=None, on_progress=None):
                 release.wait(3)
-                return super().wait_turn(turn_id, minutes, on_started)
+                return super().wait_turn(turn_id, minutes, on_started, on_progress)
 
         slow = SlowSession(started=False)
         root = make_dir(self.base, {"draft": CODEX_VERIFIED})

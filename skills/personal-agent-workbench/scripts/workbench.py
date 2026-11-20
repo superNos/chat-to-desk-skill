@@ -445,7 +445,7 @@ class CodexSession:
             raise CodexNoReply("Codex 没有返回这一轮的编号")
         return turn_id
 
-    def wait_turn(self, turn_id: str, minutes: int, on_started=None):
+    def wait_turn(self, turn_id: str, minutes: int, on_started=None, on_progress=None):
         """等这一轮结束。返回 (结局, 这一轮的回复条目)；结局是 turn 对象、"timeout" 或 "exit"。"""
         items: list = []
         deadline = time.monotonic() + minutes * 60
@@ -459,7 +459,13 @@ class CodexSession:
             if method == "turn/started" and turn.get("id") == turn_id and on_started:
                 on_started()
             elif method == "item/completed" and params.get("turnId") == turn_id:
-                items.append(params.get("item") or {})
+                message = params.get("item") or {}
+                items.append(message)
+                if (on_progress and isinstance(message, dict) and message.get("type") == "agentMessage"
+                        and message.get("phase") == "commentary"):
+                    text = message.get("text")
+                    if isinstance(text, str) and text.strip():
+                        on_progress(text.strip())
             elif method == "turn/completed" and turn.get("id") == turn_id:
                 return turn, items
 
@@ -477,13 +483,17 @@ class CodexSession:
 
 
 def final_text(items: list) -> str:
-    """一轮里最后一条不是过程说明的 Agent 回复。"""
-    texts = [
-        str(item.get("text") or "").strip() for item in items
-        if isinstance(item, dict) and item.get("type") == "agentMessage" and item.get("phase") != "commentary"
-    ]
-    texts = [t for t in texts if t]
-    return texts[-1] if texts else ""
+    """优先取最后一条明确的最终回复；旧版没有 phase 时取最后一条无标记回复。"""
+    legacy = ""
+    for item in reversed(items):
+        if not isinstance(item, dict) or item.get("type") != "agentMessage":
+            continue
+        text = str(item.get("text") or "").strip()
+        if text and item.get("phase") in ("final_answer", "final"):
+            return text
+        if not legacy and not item.get("phase"):
+            legacy = text
+    return legacy
 
 
 def is_settled(handoff: dict) -> bool:
@@ -505,7 +515,7 @@ def compare_late_result(handoff: dict, outcome, items: list) -> None:
     """已有结论时，同一轮的平台结局只用来提示，不改结果和状态。"""
     if not isinstance(outcome, dict) or outcome.get("status") != "completed":
         return
-    text = final_text(items or outcome.get("items") or [])
+    text = final_text(items + (outcome.get("items") or []))
     if not text:
         return
     saved = {r.get("text", "").strip() for r in handoff["results"]}
@@ -554,7 +564,7 @@ def apply_outcome(handoff: dict, target: dict, outcome, items: list) -> None:
     if not auto_result(target):
         add_note(handoff, "对话这一轮已结束。取回结果还没核实，请到对话里复制结果，再粘贴回这里")
         return
-    text = final_text(items or outcome.get("items") or [])
+    text = final_text(items + (outcome.get("items") or []))
     if not text:
         mark_unknown(handoff, "这一轮结束了，但没有找到回复文字")
         return
@@ -589,6 +599,7 @@ class Workbench:
             raise WorkbenchError(500, problem)
         self.page_dir = (self.root / "page").resolve()
         self.store = Store(self.root)
+        self.watched_handoffs: set[str] = set()  # 与轮次编号一起在 store.lock 下读写，仅在本服务内有效
         self.session_factory = session_factory
         self.codex_locator = codex_locator
 
@@ -712,36 +723,60 @@ class Workbench:
                 else:
                     set_status(handoff, "失败", f"还没把消息交给 Codex 就出错了，没有交出去：{str(exc)[:200]}")
             return
-        with self.store.transaction() as state:
-            handoff = find_handoff(state, handoff_id)
-            handoff.setdefault("delivery", {}).update({"adapter": "codex", "turn": turn_id})
-            set_status(handoff, "已发送", "Codex 接受了这条消息")
         minutes = config.get("codex_turn_minutes", DEFAULT_TURN_MINUTES)
-        threading.Thread(target=self.watch, args=(session, handoff_id, target, turn_id, minutes), daemon=True).start()
+        watcher = threading.Thread(target=self.watch, args=(session, handoff_id, target, turn_id, minutes), daemon=True)
+        with self.store.lock:
+            try:
+                with self.store.transaction() as state:
+                    handoff = find_handoff(state, handoff_id)
+                    handoff.setdefault("delivery", {}).update({"adapter": "codex", "turn": turn_id})
+                    set_status(handoff, "已发送", "Codex 接受了这条消息")
+                watcher.start()
+            except RuntimeError:
+                session.close()
+                with self.store.transaction() as state:
+                    refresh_failed(find_handoff(state, handoff_id), "未能启动本机监听，请重新查询这一轮")
+                return
+            except Exception:
+                session.close()
+                raise
+            self.watched_handoffs.add(handoff_id)
 
     def watch(self, session, handoff_id: str, target: dict, turn_id: str, minutes: int) -> None:
         def started():
             with self.store.transaction() as state:
                 set_status(find_handoff(state, handoff_id), "已开始", "Codex 报告这一轮已开始")
 
+        def progress(text):
+            with self.store.transaction() as state:
+                handoff = find_handoff(state, handoff_id)
+                if not is_settled(handoff):
+                    handoff["progress"] = {"text": text, "time": now()}
+
+        outcome, items = "exit", []
         try:
-            outcome, items = session.wait_turn(turn_id, minutes, started)
-        except Exception:  # 读不到结局就按“无法确认”处理，不写成失败
-            outcome, items = "exit", []
+            outcome, items = session.wait_turn(turn_id, minutes, started, progress)
+        except Exception:
+            pass  # 读不到结局就保留 exit，按“无法确认”处理
         finally:
-            declined = session.declined
-            session.close()
-        with self.store.transaction() as state:
-            handoff = find_handoff(state, handoff_id)
-            if declined:
-                add_note(handoff, f"这一轮里 Codex 请求了 {declined} 次权限或输入，工作台都拒绝了；需要的话请到 Codex 里处理")
-            apply_outcome(handoff, target, outcome, items)
+            try:
+                session.close()
+            finally:
+                with self.store.lock:
+                    self.watched_handoffs.discard(handoff_id)
+                    with self.store.transaction() as state:
+                        handoff = find_handoff(state, handoff_id)
+                        if session.declined:
+                            add_note(handoff, f"这一轮里 Codex 请求了 {session.declined} 次权限或输入，工作台都拒绝了；需要的话请到 Codex 里处理")
+                        apply_outcome(handoff, target, outcome, items)
 
     def refresh(self, handoff_id: str) -> None:
-        """用 thread/read 重新查一次这一轮的情况，例如工作台重启之后。"""
-        config = self.config()
-        with self.store.transaction() as state:
-            handoff = find_handoff(state, handoff_id)
+        """优先使用原会话的实时事件。仅在没有本机监听时按原轮次重新查询。"""
+        with self.store.lock:
+            if handoff_id in self.watched_handoffs:
+                return
+            config = self.config()
+            handoff = find_handoff(self.store.read(), handoff_id)
             target = config["targets"].get(handoff["target"])
             turn_id = (handoff.get("delivery") or {}).get("turn")
             if handoff.get("direct") and not turn_id:
@@ -1030,7 +1065,7 @@ def cmd_codex_probe(args) -> int:
     if not isinstance(outcome, dict):
         print("取回：没有等到这一轮结束，无法确认" if outcome == "timeout" else "取回：连接断了，无法确认")
         return 1
-    text = final_text(items or outcome.get("items") or [])
+    text = final_text(items + (outcome.get("items") or []))
     print(f"取回：这一轮的状态是 {outcome.get('status')}；回复：{text[:500] or '（没有找到回复文字）'}")
     return 0 if outcome.get("status") == "completed" and text else 1
 
