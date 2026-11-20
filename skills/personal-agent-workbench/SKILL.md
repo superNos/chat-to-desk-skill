@@ -28,7 +28,7 @@ description: 在用户授权范围内阅读其过去的 Agent 对话，理解用
 1. **确认范围**：先给用户“第一次使用”的说明，讲清要读什么、存在哪里、不会做什么，取得分析授权；授权后再按 [references/platform-adaptation.md](references/platform-adaptation.md) 只列出授权范围内的对话标题，核实能不能读到历史，读不到就改用粘贴或访谈。读 [references/history-analysis.md](references/history-analysis.md)。
 2. **理解工作**：在授权范围内读历史，整理成带证据的工作模型。同样按 [references/history-analysis.md](references/history-analysis.md)。
 3. **用户校准**：用用户的语言讲出发现，让用户逐条确认、修正、否定或限定范围，并补充历史里看不到的事。读 [references/calibration-interview.md](references/calibration-interview.md)。
-4. **设计工作台**：只用已确认、已修正或已限定范围的条目设计，写工作台说明，先给用户看草案（用普通话讲清打开后能看到什么、怎么用）。读 [references/workbench-design.md](references/workbench-design.md) 和 [references/agent-interaction.md](references/agent-interaction.md)；涉及向其它对话或平台交接时，再按 [references/platform-adaptation.md](references/platform-adaptation.md) 核实其余三项能力。
+4. **设计工作台**。读 [工作台设计指南](references/workbench-design.md) 和 [交互约定](references/agent-interaction.md)。在写页面前，查看当前环境可用的技能；有适合业务界面的设计类 Skill 时，选一个（例如 `frontend-design`），读取并应用它的设计流程。没有合适技能时，直接按设计指南完成排版。根据用户已确认的工作给出草案，让用户看懂从哪里选对象、在哪里操作、在哪里看到结果。涉及跨对话交接时，按 [平台适配说明](references/platform-adaptation.md) 核实相应能力。
 5. **搭建并小范围试用**：只为用户选定的一到三类工作搭建工作台。动手前先读 [references/runtime.md](references/runtime.md)，用附带的本机运行支持搭：按它生成这位用户的页面和配置，放在用户指定的目录。只有用户的电脑确实不能运行 Python 3 时，才按 [references/workbench-design.md](references/workbench-design.md) 第 4 节和用户商量别的做法；你自己的环境不能监听端口或打开浏览器，不是换做法的理由，把启动命令和试用步骤交给用户。交给用户前在页面里走一遍“发起 → 看到状态 → 得到结果”，并按 [references/quality-checks.md](references/quality-checks.md) 自查。
 6. **持续调整**：根据实际使用提出调整，用户确认后再改；让用户管理学到的规则。读 [references/evolution.md](references/evolution.md)。
 
