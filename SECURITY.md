@@ -25,7 +25,7 @@ https://github.com/superNos/personal-agent-workbench-skill/security
 
 ## 本机运行支持
 
-`skills/personal-agent-workbench/scripts/workbench.py` 在用户电脑上打开 Agent 为他生成的工作台页面。它的安全边界：
+`skills/chat-to-desk/scripts/workbench.py` 在用户电脑上打开 Agent 为他生成的工作台页面。它的安全边界：
 
 - 只监听 127.0.0.1，只接受本机地址作为 Host，用来防止 DNS 重绑定。
 - 每次启动生成一个只在内存里的随机令牌，注入到页面中；所有接口都要带这个令牌。写操作要求同源 Origin，跨站请求一律拒绝。

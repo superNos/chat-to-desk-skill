@@ -175,7 +175,7 @@ class ReleaseCheckTest(unittest.TestCase):
 
     def test_workbench_page_paths_resolve_inside_page_dir(self):
         """工作台页面的 / 开头地址按运行支持解析：/_workbench/client.js 对应技能里的文件，其余必须在 page/ 内存在。"""
-        self.write("skills/personal-agent-workbench/scripts/client.js", "// 示例\n")
+        self.write("skills/chat-to-desk/scripts/client.js", "// 示例\n")
         self.write("demo/workbench.json", "{}\n")
         self.write("demo/page/app.js", "// 示例\n")
         self.write("demo/page/index.html", "<script src=\"/_workbench/client.js\"></script><script src=\"/app.js\"></script>\n")
@@ -219,7 +219,7 @@ class InstallScriptTest(unittest.TestCase):
             dest = Path(tmp) / "skills"
             code, _ = self.run_install("--dest", str(dest), "--apply")
             self.assertEqual(code, 0)
-            target = dest / "personal-agent-workbench"
+            target = dest / "chat-to-desk"
             self.assertTrue((target / "SKILL.md").is_file())
             (target / "SKILL.md").write_text("用户自己的改动", encoding="utf-8")
             code, out = self.run_install("--dest", str(dest), "--apply")

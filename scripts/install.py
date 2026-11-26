@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""把 personal-agent-workbench 技能复制到 Codex 的技能目录（仅标准库）。
+"""把 chat-to-desk 技能复制到 Codex 的技能目录（仅标准库）。
 
 默认只预览，不写任何文件：
 
@@ -9,7 +9,7 @@
 
     python3 scripts/install.py --apply
 
-目标默认是 ${CODEX_HOME:-$HOME/.codex}/skills/personal-agent-workbench。
+目标默认是 ${CODEX_HOME:-$HOME/.codex}/skills/chat-to-desk。
 目标已存在时停止，不覆盖、不删除；需要更新时请先自己处理旧目录。
 """
 from __future__ import annotations
@@ -20,7 +20,7 @@ import shutil
 import sys
 from pathlib import Path
 
-SKILL_NAME = "personal-agent-workbench"
+SKILL_NAME = "chat-to-desk"
 SOURCE = Path(__file__).resolve().parents[1] / "skills" / SKILL_NAME
 IGNORED = shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store")
 
@@ -40,7 +40,7 @@ def planned_files() -> list[Path]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="安装 personal-agent-workbench 技能（默认只预览）")
+    parser = argparse.ArgumentParser(description="安装 chat-to-desk 技能（默认只预览）")
     parser.add_argument("--dest", type=Path, help="技能目录，默认 ${CODEX_HOME:-$HOME/.codex}/skills")
     parser.add_argument("--apply", action="store_true", help="确认复制；不加时只预览")
     args = parser.parse_args(argv)
@@ -63,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
 
     skills_dir.mkdir(parents=True, exist_ok=True)
     shutil.copytree(SOURCE, target, ignore=IGNORED)
-    print("已复制。在 Codex 里开一个新对话，输入 $personal-agent-workbench 开始。")
+    print("已复制。在 Codex 里开一个新对话，输入 $chat-to-desk 开始。")
     return 0
 
 

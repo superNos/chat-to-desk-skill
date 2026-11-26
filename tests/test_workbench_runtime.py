@@ -1,4 +1,4 @@
-"""工作台本机运行支持（skills/personal-agent-workbench/scripts/workbench.py）的行为测试。
+"""工作台本机运行支持（skills/chat-to-desk/scripts/workbench.py）的行为测试。
 
 只用标准库。所有工作台目录都建在系统临时目录里；Codex 用假会话代替，不启动真实进程。
 """
@@ -20,7 +20,7 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = ROOT / "skills" / "personal-agent-workbench" / "scripts"
+SCRIPTS = ROOT / "skills" / "chat-to-desk" / "scripts"
 THREAD = "00000000-0000-4000-8000-" + "0" * 11 + "1"  # 测试用的假编号，运行时拼出
 
 spec = importlib.util.spec_from_file_location("workbench", SCRIPTS / "workbench.py")

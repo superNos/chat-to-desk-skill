@@ -52,7 +52,7 @@
 
 选择：
 
-- `skills/personal-agent-workbench/references/cases.md`：随技能安装，给 Agent 看“不同证据导致不同结论”的推理示范，含开发总控（得到一份开发任务台账）、非开发岗位和“暂不需要”结论。
+- `skills/chat-to-desk/references/cases.md`：随技能安装，给 Agent 看“不同证据导致不同结论”的推理示范，含开发总控（得到一份开发任务台账）、非开发岗位和“暂不需要”结论。
 - `evals/personal-agent-workbench/`：不随技能安装，含至少 3 组（实际 5 组）虚构用户历史、每组的期望判断要点、差异测试/反模板测试/使用测试的检查方法。
 
 理由：评估材料包含“期望结论”，如果放进技能会让 Agent 对号入座。替代方案“只放一处”被否决。
@@ -61,7 +61,7 @@
 
 选择：新增 `tests/test_personal_agent_workbench.py`（标准库 `unittest`），检查：
 
-- 技能 frontmatter 有 `name`、`description`，`name` 与目录一致；`openai.yaml` 的 `default_prompt` 包含 `$personal-agent-workbench`。
+- 技能 frontmatter 有 `name`、`description`，`name` 与目录一致；`openai.yaml` 的 `default_prompt` 包含 `$chat-to-desk`。
 - `SKILL.md` 路由到的参考文件都存在。
 - 评估历史至少 3 组且至少一组标注为非开发岗位；每组期望结论中列出的元素都声明了来源证据编号，且该编号在本组历史中存在。
 - 期望结论之间没有完全相同的元素集合；至少一组期望结论为“暂不需要复杂工作台”，且它仍有不超过 2 个元素的最小工作台。
@@ -114,9 +114,9 @@
 
 ## Migration Plan
 
-纯新增。用户卸载时删除自己复制到技能目录下的 `personal-agent-workbench/` 即可；Agent 为用户生成的工作模型、工作台说明和工作台目录存放在用户选定的位置，由用户决定是否保留。v0.1.0 的用户如果得到的是文档，可以让 Agent 按 v0.2.0 把已确认的条目搭成工作台；已确认的条目不需要重新校准。
+纯新增。用户卸载时删除自己复制到技能目录下的 `chat-to-desk/` 即可；Agent 为用户生成的工作模型、工作台说明和工作台目录存放在用户选定的位置，由用户决定是否保留。v0.1.0 的用户如果得到的是文档，可以让 Agent 按 v0.2.0 把已确认的条目搭成工作台；已确认的条目不需要重新校准。
 
 ## Open Questions
 
-- 技能与仓库的最终名称（当前用 `personal-agent-workbench`）。改名只影响目录名和文档，不改变规格。
+- 技能名称已确定为 `chat-to-desk`（展示名 Chat to Desk），仓库地址与 OpenSpec 变更编号保持不变。
 - 是否提供英文版 README 和英文技能说明。

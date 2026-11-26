@@ -501,7 +501,7 @@ class CodexSession:
     def initialize(self) -> None:
         if not self.initialized:
             self.request("initialize", {
-                "clientInfo": {"name": "personal-agent-workbench", "title": "Personal Agent Workbench", "version": "0.3.0"},
+                "clientInfo": {"name": "chat-to-desk", "title": "Chat to Desk", "version": "0.3.0"},
                 "capabilities": {"experimentalApi": True},
             })
             self.initialized = True

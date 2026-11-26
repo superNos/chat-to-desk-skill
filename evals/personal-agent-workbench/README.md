@@ -1,6 +1,6 @@
-# personal-agent-workbench 评估材料
+# Chat to Desk 评估材料
 
-本目录用于评估 `$personal-agent-workbench` 是否按证据设计工作台。它**不随技能安装**，因为里面写有期望结论；把它交给被评估的 Agent 会让 Agent 对号入座。
+本目录用于评估 `$chat-to-desk` 是否按证据设计工作台。它**不随技能安装**，因为里面写有期望结论；把它交给被评估的 Agent 会让 Agent 对号入座。
 
 所有人物、订单代号、学生代号、同事代号、日期和对话都是虚构的，不来自任何真实对话。
 

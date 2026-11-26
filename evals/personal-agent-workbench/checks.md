@@ -2,8 +2,8 @@
 
 ## 准备
 
-1. 用隔离环境安装 `skills/personal-agent-workbench/`，不要安装或提供本目录。
-2. 对每个场景，新开一个对话，告诉被评估的 Agent：“使用 `$personal-agent-workbench`。下面是我授权你看的历史和我的回答”，然后只提供该场景的 `authorization`、`platform_capabilities`、`history`，等 Agent 展示发现后再提供 `user_calibration`。不要提供 `expected` 和 `usage_probes`。`platform_capabilities` 代表评估者已在模拟环境中替 Agent 做完的核实结果。
+1. 用隔离环境安装 `skills/chat-to-desk/`，不要安装或提供本目录。
+2. 对每个场景，新开一个对话，告诉被评估的 Agent：“使用 `$chat-to-desk`。下面是我授权你看的历史和我的回答”，然后只提供该场景的 `authorization`、`platform_capabilities`、`history`，等 Agent 展示发现后再提供 `user_calibration`。不要提供 `expected` 和 `usage_probes`。`platform_capabilities` 代表评估者已在模拟环境中替 Agent 做完的核实结果。
 3. 保存 Agent 的工作模型、工作台说明和工作台目录（`workbench.json` 与 `page/`）。三种结论都应有工作台目录；没有工作台、只交了文档或说明，判为不通过（用户明确说不要工作台的情况除外，场景里没有这种用户）。
 
 ## 一、差异测试

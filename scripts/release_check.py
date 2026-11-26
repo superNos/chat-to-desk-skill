@@ -271,7 +271,7 @@ def heading_slugs(text: str) -> set[str]:
 
 
 RUNTIME_CLIENT_URL = "/_workbench/client.js"
-RUNTIME_CLIENT_FILE = Path("skills") / "personal-agent-workbench" / "scripts" / "client.js"
+RUNTIME_CLIENT_FILE = Path("skills") / "chat-to-desk" / "scripts" / "client.js"
 
 
 def workbench_page_root(path: Path) -> Path | None:

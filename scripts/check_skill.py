@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""检查 personal-agent-workbench 的入口、调用名与参考文件路由（仅标准库）。"""
+"""检查 chat-to-desk 的入口、调用名与参考文件路由（仅标准库）。"""
 from __future__ import annotations
 
 import re
@@ -8,8 +8,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL_DIR = ROOT / "skills" / "personal-agent-workbench"
-INVOCATION = "$personal-agent-workbench"
+SKILL_DIR = ROOT / "skills" / "chat-to-desk"
+INVOCATION = "$chat-to-desk"
 RUNTIME_FILES = {"workbench.py", "client.js"}
 PAGE_SUFFIXES = {".html", ".htm", ".css", ".png", ".jpg", ".jpeg", ".svg", ".webp", ".gif"}
 
@@ -21,7 +21,7 @@ def check() -> list[str]:
     if not skill_md.is_file() or not yaml_path.is_file():
         return ["技能缺少 SKILL.md 或 agents/openai.yaml"]
     text = skill_md.read_text(encoding="utf-8")
-    if not re.match(r"---\nname: personal-agent-workbench\ndescription: \S", text):
+    if not re.match(r"---\nname: chat-to-desk\ndescription: \S", text):
         errors.append("SKILL.md frontmatter 的 name 或 description 不正确")
     for path in (skill_md, yaml_path, ROOT / "README.md"):
         if not path.is_file() or INVOCATION not in path.read_text(encoding="utf-8"):

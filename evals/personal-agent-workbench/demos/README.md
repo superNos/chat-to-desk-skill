@@ -4,6 +4,8 @@
 
 所有人物、学生代号、问题、日期、对话和页面数据都是虚构的。截图里的 Agent 回复是**模拟**的：由演示人写好后粘贴进工作台，回复开头写着“【模拟 Agent 回复，演示人粘贴】”，这段文字保存在试用记录里。截图顶部的黄条是截图时由演示人另外加上的，不属于 Agent 生成的页面。截图时展开了交接内容和状态记录，方便一张图看全；“记一条新消息”“补充这条消息”等输入表单仍是折叠的。
 
+本演示发生时技能名为 `personal-agent-workbench`，现已更名为 `chat-to-desk`。原始对话与演示产物保留当时名称，下方启动命令和文档链接指向当前目录。
+
 ## 演示怎么做
 
 生成后另做了一次展示排版调整：班主任页移除了重复标题说明，两页收紧标题和分隔，分析师页把新问题的输入放在同一行，窄窗口自动换行。字段、交接规则、按钮和试用数据未改；这些视觉调整不是两次独立会话自行生成的结果。
@@ -36,7 +38,7 @@
 想自己打开某个演示页面，可以在仓库根目录运行（只用虚构数据，监听 127.0.0.1）：
 
 ```sh
-python3 skills/personal-agent-workbench/scripts/workbench.py serve --dir evals/personal-agent-workbench/demos/e1-class-teacher/agent-output --open
+python3 skills/chat-to-desk/scripts/workbench.py serve --dir evals/personal-agent-workbench/demos/e1-class-teacher/agent-output --open
 ```
 
 它会在 `agent-output/` 下新建 `data/`，看完可以删掉。
@@ -47,7 +49,7 @@ v0.1.0 的两个演示得到的都是本机文档，用户看过后指出“应�
 
 | 次数 | 发现的问题 | 对技能的修改 |
 | --- | --- | --- |
-| v0.2 第 1 次 | 两个 Agent 发现自己的环境不能监听端口，就没有用运行支持：一个做成了数据只存在浏览器里的单个离线页面，一个改回文档 | [SKILL.md](../../../skills/personal-agent-workbench/SKILL.md) 第 5 步、[workbench-design.md](../../../skills/personal-agent-workbench/references/workbench-design.md)、[runtime.md](../../../skills/personal-agent-workbench/references/runtime.md) 第 3 节和 [quality-checks.md](../../../skills/personal-agent-workbench/references/quality-checks.md) 写明：必须用运行支持搭；“你自己的环境不能监听端口”不是换做法的理由，此时给用户一行启动命令和试用步骤 |
+| v0.2 第 1 次 | 两个 Agent 发现自己的环境不能监听端口，就没有用运行支持：一个做成了数据只存在浏览器里的单个离线页面，一个改回文档 | [SKILL.md](../../../skills/chat-to-desk/SKILL.md) 第 5 步、[workbench-design.md](../../../skills/chat-to-desk/references/workbench-design.md)、[runtime.md](../../../skills/chat-to-desk/references/runtime.md) 第 3 节和 [quality-checks.md](../../../skills/chat-to-desk/references/quality-checks.md) 写明：必须用运行支持搭；“你自己的环境不能监听端口”不是换做法的理由，此时给用户一行启动命令和试用步骤 |
 | v0.2 第 2 次（本目录） | 两个 Agent 都用运行支持搭出了页面，给了启动命令。下面列出的偏差没有对应的技能缺口，如实保留，没有重跑 | 未改技能 |
 
 ### 偏差，如实记录

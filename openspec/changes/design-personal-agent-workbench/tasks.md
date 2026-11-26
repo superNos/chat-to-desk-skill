@@ -1,7 +1,7 @@
 ## 1. 技能入口
 
-- [x] 1.1 创建 `skills/personal-agent-workbench/SKILL.md`：frontmatter 含 `name`、`description`；正文写循环、不可违反的边界和阶段到参考文件的路由
-- [x] 1.2 创建 `skills/personal-agent-workbench/agents/openai.yaml`，`default_prompt` 使用 `$personal-agent-workbench`
+- [x] 1.1 创建 `skills/chat-to-desk/SKILL.md`：frontmatter 含 `name`、`description`；正文写循环、不可违反的边界和阶段到参考文件的路由
+- [x] 1.2 创建 `skills/chat-to-desk/agents/openai.yaml`，`default_prompt` 使用 `$chat-to-desk`
 
 ## 2. 参考资料
 
@@ -59,7 +59,7 @@
 ## 9. v0.2.0 方向修正：主要产出改为可交互工作台
 
 - [x] 9.1 修改 proposal、design 与各能力规格：主要产出是本机可交互工作台，“暂不需要复杂工作台”改为最小工作台；新增 `workbench-local-runtime` 能力
-- [x] 9.2 新增运行支持 `skills/personal-agent-workbench/scripts/workbench.py`（仅标准库）与 `scripts/client.js`：页面服务、记录保存、交接、状态证据、Codex 适配器与 `codex-probe`、`check`；不含任何页面布局或职业字段
+- [x] 9.2 新增运行支持 `skills/chat-to-desk/scripts/workbench.py`（仅标准库）与 `scripts/client.js`：页面服务、记录保存、交接、状态证据、Codex 适配器与 `codex-probe`、`check`；不含任何页面布局或职业字段
 - [x] 9.3 新增 `references/runtime.md`，并同步修改 `SKILL.md`、`agents/openai.yaml` 与各参考文件，去掉“可以只是文档”的规则
 - [x] 9.4 新增 `tests/test_workbench_runtime.py`：令牌、Host/Origin、目标白名单、请求大小、私有文件、状态不倒退与最新情况未知、手动交接路径、Codex 适配器（假会话）、审批请求拒绝
 - [x] 9.5 调整 `scripts/check_skill.py`：技能目录允许且只允许这两个运行支持文件，仍禁止页面、样式和图片；调整场景结论与对应测试

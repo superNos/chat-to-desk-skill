@@ -1,4 +1,4 @@
-"""personal-agent-workbench 技能与评估材料的结构校验（仅标准库）。
+"""chat-to-desk 技能与评估材料的结构校验（仅标准库）。
 
 这些检查只守住结构不变量，不证明 Agent 的产出质量；质量按
 evals/personal-agent-workbench/checks.md 判断。
@@ -17,11 +17,11 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL_DIR = ROOT / "skills" / "personal-agent-workbench"
+SKILL_DIR = ROOT / "skills" / "chat-to-desk"
 EVAL_DIR = ROOT / "evals" / "personal-agent-workbench"
 DEMO_DIR = EVAL_DIR / "demos"
 CHANGE_DIR = ROOT / "openspec" / "changes" / "design-personal-agent-workbench"
-SKILL_NAME = "personal-agent-workbench"
+SKILL_NAME = "chat-to-desk"
 
 CONCLUSIONS = {"需要工作台", "小工作台", "暂不需要复杂工作台"}
 DESTINATIONS = {"新工作", "继续某件事", "修改结果", "需先询问"}

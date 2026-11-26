@@ -1,43 +1,68 @@
-<h1 align="center">个人 Agent 工作台</h1>
+<p align="right"><strong>简体中文</strong> &nbsp; / &nbsp; <a href="README.en.md">English</a></p>
 
-<p align="center">从你做过的事，长出你自己的工作台。</p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/wordmark-dark.svg">
+    <img src="docs/images/wordmark.svg" alt="Chat to Desk" width="440">
+  </picture>
+</p>
 
-<p align="center"><strong>简体中文</strong> · <a href="README.en.md">English</a></p>
+<p align="center">从对话到工作台，把日常做法变成顺手的操作。</p>
 
-<p align="center"><a href="#-开始使用">开始使用</a> · <a href="#-看看效果">看看效果</a> · <a href="#-常见问题">常见问题</a> · <a href="LICENSE">MIT License</a></p>
+<p align="center"><a href="#-开始使用"><strong>开始使用</strong></a> &nbsp; · &nbsp; <a href="#-工作方式">工作方式</a> &nbsp; · &nbsp; <a href="#-看看效果">看看效果</a></p>
+
+<br>
+
+<p align="center">
+  <img src="docs/images/hero-rounded.png" alt="把分散的对话整理成工作事项，再形成个人工作台" width="640">
+</p>
 
 <br>
 
 你用 Codex、Claude 这类 Agent 做事，对话越积越多：同样的背景每次都要重讲，上周的结果找不到，哪些事还没做完也说不清。
 
-**个人 Agent 工作台**让你自己的 Agent 阅读授权范围内的历史对话，整理日常工作和反复使用的做法，再和你一起搭建一个专属工作台，在电脑上用浏览器打开。
+**Chat to Desk** 让你自己的 Agent 阅读授权范围内的历史对话，整理日常工作和反复使用的做法，再在一个负责统筹工作的**总对话里打开专属面板**。你留在这个总对话中，由它协调整个工作流程。
 
-常做的事成为顺手的功能。选中事项、交代本次变化，就能让 Agent 继续处理，并在原处看到进度与结果。
+面板把常做的事变成顺手的功能。选中事项、交代本次变化，就能让对应的 Agent 继续处理，进度与结果自动回到面板；调整工作安排时，可以直接和总对话沟通。
+
 
 <br>
 
-![把分散的对话整理成工作事项，再形成个人工作台](docs/images/hero.png)
+## 🧭 工作方式
+
+**一个总对话负责统筹，一个面板承载日常操作，相关执行对话负责具体工作。** 工作台是你在总对话中协调工作的入口，不是生成后就与对话分离的独立应用。
+
+| 在哪里 | 做什么 |
+| --- | --- |
+| **总对话** | 理解你的工作、整理流程、协调执行；你在这里补充要求、调整安排。 |
+| **工作面板** | 在总对话中打开。按实际事项展示常用操作、当前进度、最新结论和下一步。 |
+| **执行对话** | 在对应项目里处理具体工作。一直在某个对话办理的事，继续复用那个对话。 |
+
+你在面板里发起操作，相关对话在后台执行，进度和结果回到同一事项。你可以继续留在总对话，不必逐个切换对话或复制粘贴任务。
 
 <br>
 
 ## ✨ 开始使用
 
-**把下面这段话发给你的 AI 助手。** 安装和本机配置交给它处理。
+**把下面这段话发到你准备用来统筹工作的对话。** 安装和面板配置交给 Agent 处理。
 
 ```text
-请帮我安装这个仓库里的 $personal-agent-workbench：
+请帮我安装这个仓库里的 $chat-to-desk：
 https://github.com/superNos/personal-agent-workbench-skill
 
 先问我可以读取哪些历史对话，再整理我的日常工作和可复用流程。
-和我一起选一件常做的事，把它做成可以在本机打开的工作台，
-能直接交代工作、自动查看进度和结果。
+把当前对话作为总对话，在这里打开我的工作面板，协调整个工作流程。
+先和我选一件常做的事，在面板里提供对应操作，
+接到合适的项目和执行对话，并自动把进度、结果带回这件事。
 ```
+
+已安装旧版 `$personal-agent-workbench` 时，请让 Agent 将旧技能替换为 `$chat-to-desk`，保留个人工作台及数据。仓库地址不变。
 
 第一次可以从一个小范围开始：
 
 > 只看最近一个月我筹备活动的对话，私人聊天跳过。先告诉我，你觉得哪些事我总在重复做？
 
-助手会先和你确认对工作的理解及页面草案，再搭建、接通并验证一项实际工作。无需提前设计页面或整理需求文档。
+总对话中的 Agent 会先和你确认对工作的理解及面板草案，再打开面板、接通执行对话并验证一项实际工作。无需提前设计页面或整理需求文档。
 
 <br>
 
@@ -63,9 +88,9 @@ https://github.com/superNos/personal-agent-workbench-skill
 
 同一方法在不同事情中复用，或你明确以后还会用，才提炼成常用操作。固定背景、步骤和结果要求融入功能，你只需填写这次变化的信息。
 
-### 3. 在工作台里继续办理
+### 3. 由总对话协调，在面板里办理
 
-接通后，操作在后台交给对应项目和对话，进度与结论自动回到这次记录。固定在原对话处理的事继续复用原对话；不同对话可并行，同一对话按顺序排队。
+总对话负责把事项、流程和执行对话组织起来。面板接通后，操作在后台交给对应项目和对话，进度与结论自动回到这次记录。固定在原对话处理的事继续复用原对话；不同对话可并行，同一对话按顺序排队。
 
 <br>
 
@@ -84,14 +109,14 @@ https://github.com/superNos/personal-agent-workbench-skill
 <details>
 <summary><strong>我不是开发者，可以用吗？</strong></summary>
 
-可以。你负责说明哪些对话能看、助手是否理解了你的工作，以及页面是否顺手；搭建和配置由 Agent 处理。使用环境需要允许 Agent 读写本机文件并运行本机工作台。
+可以。你负责说明哪些对话能看、助手是否理解了你的工作，以及页面是否顺手；搭建和配置由 Agent 处理。使用环境需要支持在对话中打开面板，并允许 Agent 读写本机文件、运行面板所需的本机服务。
 
 </details>
 
 <details>
 <summary><strong>支持 Codex、Claude 和 WorkBuddy 吗？</strong></summary>
 
-维护者在 Codex 上试通过。Claude、WorkBuddy 等环境可以使用同一套工作分析方法，但历史访问、后台发送和结果回传取决于宿主提供的能力。助手会先核实连接条件；没有接通的操作会说明原因，不会显示成已经开始。
+维护者在 Codex 上试通过。Claude、WorkBuddy 等环境可以使用同一套工作分析方法，但对话内面板、历史访问、后台发送和结果回传取决于宿主提供的能力。助手会先核实连接条件；没有接通的操作会说明原因，不会显示成已经开始。
 
 </details>
 
@@ -113,7 +138,7 @@ https://github.com/superNos/personal-agent-workbench-skill
 
 ## 文档与贡献
 
-[技能说明](skills/personal-agent-workbench/SKILL.md) · [参与贡献](CONTRIBUTING.md) · [版本记录](CHANGELOG.md) · [报告问题](https://github.com/superNos/personal-agent-workbench-skill/issues)
+[技能说明](skills/chat-to-desk/SKILL.md) · [参与贡献](CONTRIBUTING.md) · [版本记录](CHANGELOG.md) · [报告问题](https://github.com/superNos/personal-agent-workbench-skill/issues)
 
 文档与演示仅使用虚构数据。请勿在公开 issue 中粘贴真实对话、个人资料或密钥；安全问题请按[安全说明](SECURITY.md)私下报告。
 
