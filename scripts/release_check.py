@@ -77,6 +77,8 @@ ALLOWED_URL_PREFIXES = (
     "https://opensource.org/",
     "https://keepachangelog.com/",
     "https://semver.org/",
+    "https://ant.design/docs/react/customize-theme/",  # 组件库官方主题说明
+    "https://element-plus.org/en-US/component/config-provider.html",  # 官方全局配置
     "http://www.w3.org/2000/svg",  # SVG 命名空间标识，不会被访问
 )
 
