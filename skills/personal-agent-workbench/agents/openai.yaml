@@ -1,4 +1,4 @@
 interface:
   display_name: "个人 Agent 工作台"
-  short_description: "按你的历史工作和确认结果，一起做出并调整只属于你的本机 Agent 工作台"
-  default_prompt: "使用 $personal-agent-workbench 在我授权的范围内了解我平时用 Agent 做的工作，再和我一起做一个按我的工作定制、能在浏览器里打开的工作台。"
+  short_description: "从授权历史梳理日常工作与流程，生成能直接操作和查看结果的专属工作台"
+  default_prompt: "使用 $personal-agent-workbench 从授权历史还原我的日常工作，提炼可复用流程，做成不必重复聊天交代步骤、能直接执行并自动显示结果的个人工作台。"
