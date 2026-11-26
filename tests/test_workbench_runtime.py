@@ -14,6 +14,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -52,7 +53,7 @@ class FakeSession:
         self.sent = []
         self.closed = False
 
-    def start_turn(self, thread_id, text):
+    def start_turn(self, thread_id, text, **_options):
         if self.start_error:
             raise wb.CodexReplyError(self.start_error)
         if self.no_reply == "before":
@@ -412,8 +413,8 @@ class LogicTest(unittest.TestCase):
         self.assertEqual(self.get(bench, handoff_id)["status"], "已完成")
 
     def test_long_result_is_marked_partial(self):
-        """结果恰好到上限时照常保存；超过上限时只存前面部分，标明不完整，状态是待确认而不是已完成。"""
-        for extra, status in ((0, "已完成"), (4, "待确认")):
+        """结果恰好到上限时照常保存；超过上限时只存前面部分，用 truncated 和提示标明不完整，状态照常。"""
+        for extra, status in ((0, "已完成"), (4, "已完成")):
             with self.subTest(extra=extra):
                 base = self.base / str(extra)
                 base.mkdir()
@@ -486,7 +487,7 @@ class LogicTest(unittest.TestCase):
                 entered, release = threading.Event(), threading.Event()
 
                 class HangingStart(FakeSession):
-                    def start_turn(self, thread_id, text, _kind=kind):
+                    def start_turn(self, thread_id, text, _kind=kind, **_options):
                         entered.set()
                         release.wait(3)
                         if _kind == "reply-error":
@@ -602,6 +603,159 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(any("外部地址" in p for p in wb.check_dir(root)))
         (root / "page" / "index.html").write_text("<html><head></head><body><script src=\"/_workbench/client.js\"></script></body></html>", encoding="utf-8")
         self.assertEqual(wb.check_dir(root), [])
+
+
+class GatedSession(FakeSession):
+    """可控制何时结束这一轮的假会话，记录交出时的对话与选项。"""
+
+    log: list = []
+
+    def __init__(self, gate=None, new_thread=None, project_seen=None, **kwargs):
+        super().__init__(**kwargs)
+        self.gate = gate
+        self.new_thread = new_thread
+        self.project_seen = project_seen
+        self.thread_id = None
+
+    def start_turn(self, thread_id, text, **options):
+        if options.get("project") and self.project_seen != options["project"]:
+            raise wb.ProjectMismatch("对话所属的项目与这项工作绑定的项目不一致，没有发送")
+        self.thread_id = thread_id or self.new_thread
+        GatedSession.log.append((thread_id, self.thread_id, options))
+        self.turn_sent = True
+        return f"turn-{len(GatedSession.log)}"
+
+    def wait_turn(self, turn_id, minutes, on_started=None, on_progress=None):
+        if self.gate is not None:
+            self.gate.wait(3)
+        return super().wait_turn(turn_id, minutes, on_started, on_progress)
+
+
+class LaneTest(unittest.TestCase):
+    """同一对话排队、不同对话并行、每件事各开对话、项目绑定与权限。"""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.base = Path(self.tmp.name)
+        GatedSession.log = []
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def get(self, bench, handoff_id):
+        return wb.find_handoff(bench.store.read(), handoff_id)
+
+    def run_one(self, bench, target="draft", **extra):
+        payload = {"target": target, "intent": "new", "ask": "核对", "expect": "结论", **extra}
+        return bench.create_handoff(payload, require_direct=True)["id"]
+
+    def test_same_thread_queues_and_other_thread_runs_in_parallel(self):
+        other = {**CODEX_VERIFIED, "thread": THREAD[:-1] + "2"}
+        root = make_dir(self.base, {"draft": CODEX_VERIFIED, "other": other})
+        gate = threading.Event()
+        bench = wb.Workbench(root, session_factory=lambda _b: GatedSession(gate=gate), codex_locator=lambda: "codex")
+        first = self.run_one(bench)
+        second = self.run_one(bench)
+        third = self.run_one(bench, target="other")
+        self.assertEqual(self.get(bench, second)["status"], "排队中")
+        self.assertTrue(wait_for(lambda: self.get(bench, third)["status"] in ("已发送", "已开始")))
+        self.assertEqual(len(GatedSession.log), 2)  # 第二条还没交出
+        gate.set()
+        self.assertTrue(wait_for(lambda: all(self.get(bench, h)["status"] == "已完成" for h in (first, second, third))))
+        self.assertEqual(len(GatedSession.log), 3)
+
+    def test_per_item_thread_created_once_and_reused(self):
+        target = {"label": "每件事一个对话", "adapter": "codex", "perItem": True, "project": "p1",
+                  "capabilities": CODEX_VERIFIED["capabilities"]}
+        root = make_dir(self.base, {"item": target})
+        new_id = THREAD[:-1] + "9"
+        bench = wb.Workbench(root, session_factory=lambda _b: GatedSession(new_thread=new_id, project_seen="p1"),
+                             codex_locator=lambda: "codex")
+        with self.assertRaises(wb.WorkbenchError):
+            self.run_one(bench, target="item")  # 缺事项编号
+        first = self.run_one(bench, target="item", ref="A-1")
+        self.assertTrue(wait_for(lambda: self.get(bench, first)["status"] == "已完成"))
+        second = self.run_one(bench, target="item", ref="A-1", intent="continue", about="A-1 的结论")
+        self.assertTrue(wait_for(lambda: self.get(bench, second)["status"] == "已完成"))
+        self.assertEqual([entry[0] for entry in GatedSession.log], [None, new_id])
+        self.assertEqual(bench.store.read()["threads"], {"item:A-1": new_id})
+        self.assertNotIn(new_id, json.dumps(bench.public_state(), ensure_ascii=False))
+
+    def test_project_mismatch_is_not_sent(self):
+        root = make_dir(self.base, {"draft": {**CODEX_VERIFIED, "project": "p1"}})
+        bench = wb.Workbench(root, session_factory=lambda _b: GatedSession(project_seen="p2"), codex_locator=lambda: "codex")
+        handoff_id = self.run_one(bench)
+        item = self.get(bench, handoff_id)
+        self.assertEqual(item["status"], "失败")
+        self.assertIn("项目", item["events"][-1]["evidence"])
+
+    def test_access_policy_and_safety_line(self):
+        self.assertEqual(wb.turn_policy("read-only")["sandboxPolicy"], {"type": "readOnly", "networkAccess": False})
+        self.assertTrue(wb.turn_policy("read-only-network")["sandboxPolicy"]["networkAccess"])
+        self.assertEqual(wb.turn_policy("inherit"), {})
+        root = make_dir(self.base, {"draft": CODEX_VERIFIED})
+        bench = wb.Workbench(root, session_factory=lambda _b: GatedSession(), codex_locator=lambda: "codex")
+        handoff_id = self.run_one(bench)
+        self.assertTrue(wait_for(lambda: self.get(bench, handoff_id)["status"] == "已完成"))
+        self.assertIn(wb.SAFETY_LINE, self.get(bench, handoff_id)["text"])
+        self.assertEqual(GatedSession.log[0][2].get("access", "read-only"), "read-only")  # 没写就按只读交出
+        self.assertNotIn("allow_queue", GatedSession.log[0][2])  # 只读目标不排进原对话队列
+
+    def test_queue_ticket_marks_queued_and_finds_turn(self):
+        session = wb.CodexSession.__new__(wb.CodexSession)
+        pages = [{"data": [{"id": "t9", "status": "completed", "items": [
+            {"type": "userMessage", "content": [{"type": "text", "text": "要求\n" + wb.QUEUE_MARK + "m1"}]},
+            {"type": "agentMessage", "phase": "final_answer", "text": "排队结果"}]}]}]
+        session.request = lambda method, params, timeout=0: pages[0]
+        self.assertEqual(session.queued_turn(THREAD, "queue:m1:t0")["id"], "t9")
+        self.assertIsNone(session.queued_turn(THREAD, "queue:m2:t9"))
+
+    def test_config_targets(self):
+        ok = {"label": "x", "adapter": "codex", "perItem": True, "project": "p", "cwd": "/tmp", "access": "inherit"}
+        self.assertEqual(wb.validate_config({"targets": {"a": ok}}), [])
+        self.assertTrue(wb.validate_config({"targets": {"a": {**ok, "thread": THREAD}}}))
+        self.assertTrue(wb.validate_config({"targets": {"a": {**ok, "access": "full"}}}))
+        self.assertTrue(wb.validate_config({"targets": {"a": {**ok, "cwd": "relative"}}}))
+        self.assertTrue(wb.validate_config({"targets": {"a": {"label": "x", "perItem": True}}}))
+
+    def test_original_queue_never_resumes_or_opens_thread(self):
+        """复用原对话直接入队，不通过恢复会话抢占输入；非零退出不盲目重发。"""
+        session = wb.CodexSession.__new__(wb.CodexSession)
+        session.initialized = True
+        session.codex_bin = "codex"
+        calls = []
+        def request(method, params):
+            calls.append(method)
+            if method == "thread/read":
+                return {"thread": {"id": THREAD, "projectId": "p1"}}
+            return {"data": []}
+        session.request = request
+        with mock.patch.object(wb.subprocess, "run", return_value=mock.Mock(returncode=0)) as run:
+            ticket = session.start_turn(THREAD, "核对", project="p1", access="inherit", allow_queue=True)
+            self.assertTrue(ticket.startswith("queue:"))
+            self.assertEqual(calls, ["thread/read", "thread/turns/list"])
+            self.assertIn("--resume", run.call_args.args[0])
+        with mock.patch.object(wb.subprocess, "run", return_value=mock.Mock(returncode=1)):
+            with self.assertRaises(wb.CodexNoReply):
+                session.queue(THREAD, "核对", "p1")
+            self.assertTrue(session.turn_sent)
+
+    def test_new_thread_project_checked_before_turn(self):
+        """创建响应的项目不符时不发送；匹配时给本轮实际施加只读联网权限。"""
+        session = wb.CodexSession.__new__(wb.CodexSession)
+        session.initialized = True
+        calls = []
+        def request(method, params):
+            calls.append((method, params))
+            return {"thread": {"id": THREAD, "projectId": "p1"}, "turn": {"id": "t1"}}
+        session.request = request
+        with self.assertRaises(wb.ProjectMismatch):
+            session.start_turn(None, "核对", project="p2")
+        self.assertEqual([c[0] for c in calls], ["thread/start"])
+        calls.clear()
+        session.start_turn(None, "核对", project="p1", access="read-only-network")
+        self.assertEqual(calls[0][1]["projectId"], "p1")
+        self.assertEqual(calls[1][1]["sandboxPolicy"], {"type": "readOnly", "networkAccess": True})
 
 
 class HttpTest(unittest.TestCase):

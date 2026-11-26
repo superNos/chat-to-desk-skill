@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import ast
 import sys
 from pathlib import Path
 
@@ -49,6 +50,15 @@ def check() -> list[str]:
         for name in sorted(RUNTIME_FILES):
             if name not in doc:
                 errors.append(f"references/runtime.md 没有说明 scripts/{name}")
+        tree = ast.parse((SKILL_DIR / "scripts/workbench.py").read_text(encoding="utf-8"))
+        mapping = next(ast.literal_eval(node.value) for node in tree.body
+                       if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "USER_STATUS" for t in node.targets))
+        client = (SKILL_DIR / "scripts/client.js").read_text(encoding="utf-8")
+        for evidence, display in mapping.items():
+            if evidence not in doc or display not in doc:
+                errors.append(f"运行指南缺少状态映射：{evidence} → {display}")
+            if f'"{evidence}": "{display}"' not in client:
+                errors.append(f"客户端状态映射不一致：{evidence}")
     return errors
 
 

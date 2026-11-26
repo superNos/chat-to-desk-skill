@@ -26,10 +26,21 @@
 
   const handoffPath = (id, action) => "/api/handoffs/" + encodeURIComponent(id) + "/" + action;
 
-  // 状态的标准写法。页面可以换成用户的说法，但不能把两档合成一档，也不能说得比证据更乐观。
+  // 给用户看的状态。证据状态（handoff.status）留在 events 里，用户问“为什么”时再展开。
+  const USER_STATUS = {
+    "需手动完成": "待你手动交接",
+    "排队中": "排队中",
+    "已发送": "处理中",
+    "已开始": "处理中",
+    "已完成": "有结果",
+    "待确认": "等你决定",
+    "失败": "出错了",
+  };
+
   function statusText(handoff) {
     if (!handoff) return "";
-    return handoff.unknown ? handoff.status + "（最新情况未知）" : handoff.status;
+    const shown = USER_STATUS[handoff.status] || handoff.status;
+    return handoff.unknown ? "暂时联系不上（上次：" + shown + "）" : shown;
   }
 
   async function copyText(text) {
@@ -58,21 +69,26 @@
       call("PUT", "/api/records/" + encodeURIComponent(key), { value, replace: true, confirmed: confirmed === true }),
     deleteRecord: (key, confirmed) =>
       call("DELETE", "/api/records/" + encodeURIComponent(key), { confirmed: confirmed === true }),
-    // 发起交接：{ target, intent: "new"|"continue"|"revise", about, ref, background, ask, expect, confirmAfter, continues }
+    // 在后台交给 Agent：{ target, intent: "new"|"continue"|"revise", about, ref, background, ask, expect, confirmAfter, continues }
+    // 同一对话按先后排队，不同对话并行；不会打开或切换用户正在看的 Codex 页面
     run: (fields) => call("POST", "/api/runs", fields),
-    // 旧版页面兼容入口。新工作台的执行按钮调用 run。
-    handoff: (fields) => call("POST", "/api/handoffs", fields),
-    // 用户自己把交接内容粘贴到对话后点的
-    markPasted: (id) => call("POST", handoffPath(id, "pasted"), {}),
-    // 用户把对话里的结果粘贴回来
-    addResult: (id, text) => call("POST", handoffPath(id, "result"), { text }),
+    // 重新查一次最新情况（不会重新发送）
+    refresh: (id) => call("POST", handoffPath(id, "refresh"), {}),
     // 待确认的事由用户自己处理完（例如他本人发出了回复）后记一笔；工作台本身不做这类动作
     markDone: (id, note) => call("POST", handoffPath(id, "done"), { note }),
     // 用户看到了明确的失败信息
     markFailed: (id, reason) => call("POST", handoffPath(id, "failed"), { reason }),
-    // 直接交给 Codex 的交接，重新查一次最新情况
-    refresh: (id) => call("POST", handoffPath(id, "refresh"), {}),
     statusText,
     copyText,
+    // 保留旧页面使用的顶层别名，升级运行支持不破坏已有工作台。
+    handoff: (fields) => call("POST", "/api/handoffs", fields),
+    markPasted: (id) => call("POST", handoffPath(id, "pasted"), {}),
+    addResult: (id, text) => call("POST", handoffPath(id, "result"), { text }),
+    // 旧版兼容：只给还在用手动交接的旧页面，新页面不要用
+    legacy: {
+      handoff: (fields) => call("POST", "/api/handoffs", fields),
+      markPasted: (id) => call("POST", handoffPath(id, "pasted"), {}),
+      addResult: (id, text) => call("POST", handoffPath(id, "result"), { text }),
+    },
   };
 })();
